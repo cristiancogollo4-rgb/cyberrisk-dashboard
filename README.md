@@ -11,10 +11,10 @@ Visualización de hallazgos, riesgos y prioridades por reto, más el informe té
 
 | Reto | Laboratorio | Responsable | Estado |
 |------|-------------|-------------|--------|
-| 1 | The Marketplace (web) | **[tu nombre]** | ✅ Completo |
-| 2 | PHP2Shell (CVE 2026) | [compañero] | ⏳ Pendiente |
-| 3 | dOOMs Day (Blue Team) | [compañero] | ⏳ Pendiente |
-| 4 | Mr-Robot (web + escalada) | [compañero] | ⏳ Pendiente |
+| 1 | The Marketplace (web) | **Cristian Felipe Cogollo Rodríguez** | ✅ Completo |
+| 2 | PHP2Shell (CVE 2026) | Andrey David Morales Díaz | ⏳ Pendiente |
+| 3 | dOOMs Day (Blue Team) | Andrey David Morales Díaz | ⏳ Pendiente |
+| 4 | Mr-Robot (web + escalada) | Wilson Javier Gómez Mantilla | ⏳ Pendiente |
 
 ---
 
