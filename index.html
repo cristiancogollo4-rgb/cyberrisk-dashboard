@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard CyberRisk 2.0 — Hallazgos · Riesgos · Prioridades</title>
+<style>
+  :root{
+    --azul:#0b2545; --azul2:#13315c; --acento:#00b4d8; --rojo:#c1121f; --naranja:#b45f00;
+    --amarillo:#e6b800; --verde:#1f7a6f; --gris:#f4f6fb; --borde:#d7dee8; --texto:#1a1f2b;
+    --panel:#ffffff; --muted:#5a6472;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",system-ui,Arial,sans-serif;color:var(--texto);margin:0;
+       background:linear-gradient(180deg,#eef3fb,#f7f9fd 240px);line-height:1.5;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 60px}
+  header.top{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:26px 0 20px;
+             box-shadow:0 2px 12px rgba(11,37,69,.25)}
+  header.top .wrap{padding-top:0;padding-bottom:0}
+  header.top .sub{color:var(--acento);letter-spacing:1.5px;font-size:12px;font-weight:700;text-transform:uppercase}
+  header.top h1{margin:4px 0 2px;font-size:26px;color:#fff}
+  header.top .meta{opacity:.85;font-size:12.5px}
+  /* tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 4px}
+  .tab{border:1px solid var(--borde);background:#fff;border-radius:10px 10px 0 0;padding:10px 16px;
+       cursor:pointer;font-weight:600;color:var(--azul2);font-size:13.5px;display:flex;align-items:center;gap:8px;
+       border-bottom:3px solid transparent;transition:.15s}
+  .tab:hover{background:var(--gris)}
+  .tab.active{border-bottom-color:var(--acento);color:var(--azul);box-shadow:0 -2px 8px rgba(0,0,0,.05)}
+  .tab .dot{width:9px;height:9px;border-radius:50%}
+  .dot-ok{background:#1f7a6f}.dot-pend{background:#9aa4b2}
+  .tab .st{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;color:#fff}
+  .st-ok{background:#1f7a6f}.st-pend{background:#8793a5}
+  .panel{display:none;background:var(--panel);border:1px solid var(--borde);border-radius:0 12px 12px 12px;
+         padding:22px;box-shadow:0 4px 18px rgba(11,37,69,.06)}
+  .panel.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2.sec{color:var(--azul);font-size:16px;border-left:4px solid var(--acento);padding-left:10px;margin:26px 0 12px}
+  h2.sec:first-of-type{margin-top:4px}
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:4px 0 6px}
+  .kpi{background:linear-gradient(135deg,#fff,#f3f7fd);border:1px solid var(--borde);border-radius:12px;padding:14px 16px}
+  .kpi .n{font-size:28px;font-weight:800;color:var(--azul);line-height:1}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:600}
+  /* findings */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
+  .filters .lbl{font-size:12px;color:var(--muted);margin-right:2px}
+  .fbtn{border:1px solid var(--borde);background:#fff;border-radius:20px;padding:5px 13px;cursor:pointer;
+        font-size:12.5px;font-weight:600;color:var(--azul2)}
+  .fbtn.active{background:var(--azul);color:#fff;border-color:var(--azul)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{border:1px solid var(--borde);border-left-width:5px;border-radius:10px;padding:13px 15px;background:#fff;
+        transition:.15s}
+  .card:hover{box-shadow:0 4px 14px rgba(0,0,0,.09);transform:translateY(-1px)}
+  .card.crit{border-left-color:var(--rojo)} .card.alto{border-left-color:var(--naranja)}
+  .card.medio{border-left-color:var(--amarillo)} .card.bajo{border-left-color:var(--verde)}
+  .card .id{font-family:Consolas,monospace;font-size:11.5px;color:var(--muted);font-weight:700}
+  .card h4{margin:3px 0 6px;font-size:14.5px;color:var(--azul)}
+  .card p{margin:0 0 8px;font-size:12.6px;color:#333}
+  .card .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .sev{display:inline-block;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:700;color:#fff}
+  .sev.crit{background:var(--rojo)} .sev.alto{background:var(--naranja)}
+  .sev.medio{background:var(--amarillo);color:#4a3b00} .sev.bajo{background:var(--verde)}
+  .owasp{display:inline-block;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;
+         background:#e7eef7;color:var(--azul2)}
+  .flagx{display:inline-block;background:#06202a;color:#4ee6a8;padding:2px 8px;border-radius:5px;
+         font-family:Consolas,monospace;font-size:11px}
+  /* two-col */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  /* heatmap */
+  .heat{border-collapse:collapse;margin:6px 0}
+  .heat td,.heat th{border:1px solid #c3ccd8;width:70px;height:52px;text-align:center;vertical-align:middle;
+                    font-size:11px;font-weight:600;position:relative}
+  .heat th{background:var(--azul);color:#fff;width:auto;padding:4px 8px;height:auto}
+  .heat .rh{background:var(--azul2);color:#fff}
+  .h-v{background:#d5f5e3}.h-m{background:#fdebd0}.h-a{background:#f6c9a8}.h-r{background:#f1948a}
+  .rk{display:inline-block;background:#fff;border:1px solid #556;border-radius:5px;padding:1px 5px;margin:1px;
+      font-size:10.5px;font-weight:700;cursor:pointer}
+  .rk:hover{background:var(--azul);color:#fff}
+  .legend{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;font-size:11px}
+  .legend span{padding:2px 9px;border-radius:10px;font-weight:700;color:#fff}
+  /* priority bars */
+  .bar{margin:9px 0}
+  .bar .t{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px}
+  .bar .t b{color:var(--azul)}
+  .bar .track{background:#edf1f7;border-radius:6px;height:16px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;
+             padding-right:7px;color:#fff;font-size:10.5px;font-weight:700}
+  table.mini{border-collapse:collapse;width:100%;font-size:12.3px;margin:6px 0}
+  table.mini th,table.mini td{border:1px solid var(--borde);padding:6px 8px;text-align:left;vertical-align:top}
+  table.mini th{background:var(--azul);color:#fff;font-weight:600}
+  table.mini tr:nth-child(even) td{background:var(--gris)}
+  .detail{background:var(--gris);border:1px dashed var(--borde);border-radius:8px;padding:12px 14px;margin:10px 0;
+          font-size:12.6px;display:none}
+  .detail.show{display:block}
+  .pend{text-align:center;padding:50px 20px;color:var(--muted)}
+  .pend .big{font-size:40px;opacity:.3}
+  .pend h3{color:var(--azul2);margin:10px 0 6px}
+  .tmpl{max-width:640px;margin:16px auto 0;text-align:left;background:var(--gris);border:1px solid var(--borde);
+        border-radius:10px;padding:16px 18px;font-size:12.8px}
+  .tmpl b{color:var(--azul)}
+  .foot{text-align:center;font-size:11px;color:#8793a5;margin-top:26px}
+  .note{background:#fff7e6;border-left:4px solid #b45f00;padding:9px 13px;border-radius:4px;font-size:12.5px;margin:12px 0}
+  .pill{font-size:10.5px;background:#e7eef7;color:var(--azul2);border-radius:10px;padding:2px 8px;font-weight:600}
+  .btn-report{display:inline-flex;align-items:center;gap:9px;margin-top:14px;background:#00b4d8;color:#042b36;
+       text-decoration:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:10px;border:1px solid #0a94b3;
+       transition:.15s}
+  .btn-report:hover{background:#19c3e6}
+  .btn-report .ic{font-size:16px}
+  .btn-report .sub{font-weight:500;font-size:11.5px;opacity:.8}
+  .reportbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:#eef6fb;border:1px solid #cfe6f2;
+       border-radius:10px;padding:12px 16px;margin:4px 0 16px}
+  .reportbar .txt{font-size:12.8px;color:var(--azul2)}
+  .reportbar a{margin-top:0}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="sub">Hackathon CyberRisk 2.0 · The Next Level</div>
+    <h1>Dashboard ejecutivo — Hallazgos · Riesgos · Prioridades</h1>
+    <div class="meta">InnovaSec S.A.S. (escenario ficticio) · Equipo <b>[Nombre]</b> · Actualizado 14/11/2026 ·
+      Nivel actual: <b>1</b> (Reto 1 completado)</div>
+    <a class="btn-report" href="Informe-CyberRisk2.0.html" target="_blank" rel="noopener">
+      <span class="ic">📄</span>
+      <span>Ver informe del laboratorio<br><span class="sub">Documento completo · 20 apartados · evidencias</span></span>
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-p="r1"><span class="dot dot-ok"></span>Reto 1 · The Marketplace <span class="st st-ok">COMPLETO</span></div>
+    <div class="tab" data-p="r2"><span class="dot dot-pend"></span>Reto 2 · PHP2Shell <span class="st st-pend">COMPAÑEROS</span></div>
+    <div class="tab" data-p="r3"><span class="dot dot-pend"></span>Reto 3 · dOOMs Day <span class="st st-pend">COMPAÑEROS</span></div>
+    <div class="tab" data-p="r4"><span class="dot dot-pend"></span>Reto 4 · Mr-Robot <span class="st st-pend">COMPAÑEROS</span></div>
+    <div class="tab" data-p="glob"><span class="dot dot-pend"></span>Consolidado 4 retos</div>
+  </div>
+
+  <!-- ============ RETO 1 ============ -->
+  <section class="panel active" id="r1">
+    <div class="note">Panel <b>desarrollado por el Líder Red Team</b> (Reto 1). Interactivo: filtra los hallazgos por severidad
+      y pulsa un riesgo del mapa de calor para ver su detalle. Enfoque web · compromiso anónimo → <b>root</b>.</div>
+
+    <div class="reportbar">
+      <span class="txt"><b>Informe técnico del Reto 1:</b> desarrollo paso a paso, OWASP, Blue Team, controles ISO y evidencias.</span>
+      <a class="btn-report" href="Informe-CyberRisk2.0.html" target="_blank" rel="noopener">
+        <span class="ic">📄</span><span>Abrir informe completo</span></a>
+    </div>
+
+    <h2 class="sec">Indicadores clave</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="n">3<small>/3</small></div><div class="l">Flags obtenidas</div></div>
+      <div class="kpi"><div class="n">6</div><div class="l">Hallazgos (H-01a…f)</div></div>
+      <div class="kpi"><div class="n">3</div><div class="l">Riesgos críticos</div></div>
+      <div class="kpi"><div class="n">root</div><div class="l">Nivel de compromiso</div></div>
+      <div class="kpi"><div class="n">5</div><div class="l">Controles ISO 27001</div></div>
+    </div>
+
+    <h2 class="sec">Hallazgos — explotación controlada</h2>
+    <div class="filters">
+      <span class="lbl">Filtrar por severidad:</span>
+      <button class="fbtn active" data-f="all">Todos</button>
+      <button class="fbtn" data-f="crit">Crítico</button>
+      <button class="fbtn" data-f="alto">Alto</button>
+    </div>
+    <div class="cards" id="cards"></div>
+
+    <div class="grid2">
+      <div>
+        <h2 class="sec">Mapa de calor de riesgos</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Impacto (filas) × Probabilidad (columnas). Pulsa un riesgo.</p>
+        <table class="heat">
+          <tr><th></th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr>
+          <tr><th class="rh">I4</th><td class="h-a"></td><td class="h-a"><span class="rk" data-r="R-03">R-03</span></td>
+              <td class="h-r"><span class="rk" data-r="R-01">R-01</span><span class="rk" data-r="R-02">R-02</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I3</th><td class="h-v"></td><td class="h-m"></td>
+              <td class="h-a"><span class="rk" data-r="R-04">R-04</span><span class="rk" data-r="R-05">R-05</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I2</th><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td><td class="h-a"></td></tr>
+          <tr><th class="rh">I1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td></tr>
+        </table>
+        <div class="legend">
+          <span style="background:var(--verde)">Bajo 1–3</span>
+          <span style="background:var(--amarillo);color:#4a3b00">Medio 4–6</span>
+          <span style="background:var(--naranja)">Alto 7–11</span>
+          <span style="background:var(--rojo)">Crítico 12–16</span>
+        </div>
+        <div class="detail" id="rdetail"></div>
+      </div>
+
+      <div>
+        <h2 class="sec">Prioridad de tratamiento</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Riesgo = Impacto × Probabilidad (máx. 16).</p>
+        <div id="bars"></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Riesgo residual (tras tratamiento)</h2>
+    <table class="mini">
+      <tr><th>Riesgo</th><th>Actual</th><th>Acción (resumen)</th><th>Residual</th></tr>
+      <tr><td>R-01 XSS → sesión admin</td><td>12 (Crítico)</td><td>Output encoding + CSP + HttpOnly/Secure</td><td>4 (Medio)</td></tr>
+      <tr><td>R-02 SQL Injection</td><td>12 (Crítico)</td><td>Consultas parametrizadas + validación</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-03 Escalada a root</td><td>8 (Alto)</td><td>Quitar sudo/tar; retirar de grupo docker; hardening</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-04 Credenciales en claro</td><td>9 (Alto)</td><td>Cifrar/retirar secretos; rotación; MFA</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-05 Monitoreo insuficiente</td><td>9 (Alto)</td><td>SIEM + reglas de detección</td><td>4 (Medio)</td></tr>
+    </table>
+  </section>
+
+  <!-- ============================================================= -->
+  <!-- ====  RETO 2 · PHP2Shell  — EDITA SOLO ESTE BLOQUE  ========== -->
+  <!-- ====  Responsable: [nombre del compañero]  ================== -->
+  <!-- ====  Copia la estructura del panel del Reto 1 (id="r1"):  === -->
+  <!-- ====  .kpis / .cards (#cards) / mapa de calor / barras.    === -->
+  <!-- ====  Añade tus datos al <script> (findings/risks) o escribe  -->
+  <!-- ====  el HTML directo aquí. NO toques el panel del Reto 1.  == -->
+  <!-- ============================================================= -->
+  <section class="panel" id="r2">
+    <div class="pend">
+      <div class="big">🔒</div>
+      <h3>Reto 2 — PHP2Shell · Responsable: <span style="color:#c1121f">[nombre]</span></h3>
+      <p>Enfoque: vulnerabilidades recientes del entorno PHP (CVE-2026-109618 / CVE-2026-109619) — Red Team.</p>
+      <div class="tmpl">
+        <b>Qué rellenar en este panel (mismo formato que el Reto 1):</b>
+        <ul>
+          <li>KPIs: flags/objetivos, nº de hallazgos, severidad máxima.</li>
+          <li>Tarjetas de hallazgos con su categoría OWASP 2025 (o CWE/CVE si no encaja).</li>
+          <li>Riesgos que aporta al mapa de calor consolidado (p. ej. R-06…).</li>
+          <li>Prioridad y riesgo residual.</li>
+        </ul>
+        <b>⚠ Integridad académica:</b> los CVE del escenario son de octubre 2026 — documentar solo lo verificado en el
+        laboratorio, sin inventar detalles técnicos.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= -->
+  <!-- ====  RETO 3 · dOOMs Day  — EDITA SOLO ESTE BLOQUE  ========== -->
+  <!-- ====  Responsable: [nombre del compañero]  ================== -->
+  <!-- ====  Blue Team: timeline, IoC, fuentes, contramedidas.    === -->
+  <!-- ====  NO toques los paneles de otros retos.               === -->
+  <!-- ============================================================= -->
+  <section class="panel" id="r3">
+    <div class="pend">
+      <div class="big">🛡️</div>
+      <h3>Reto 3 — dOOMs Day (Sherlock) · Responsable: <span style="color:#c1121f">[nombre]</span></h3>
+      <p>Enfoque: investigación defensiva Blue Team sobre registros de un servidor comprometido con PHP2Shell.</p>
+      <div class="tmpl">
+        <b>Qué rellenar:</b>
+        <ul>
+          <li>Línea de tiempo del incidente (eventos relevantes).</li>
+          <li>Indicadores de ataque (IoC) observados en los logs.</li>
+          <li>Fuentes de evidencia analizadas e interpretación.</li>
+          <li>Contramedidas de detección, contención y prevención.</li>
+        </ul>
+        Se evalúa por calidad y finalización de la investigación, no por privilegios.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= -->
+  <!-- ====  RETO 4 · Mr-Robot  — EDITA SOLO ESTE BLOQUE  =========== -->
+  <!-- ====  Responsable: [nombre del compañero]  ================== -->
+  <!-- ====  Red Team web + escalada, 3 keys. Copia formato Reto 1. = -->
+  <!-- ====  NO toques los paneles de otros retos.               === -->
+  <!-- ============================================================= -->
+  <section class="panel" id="r4">
+    <div class="pend">
+      <div class="big">🤖</div>
+      <h3>Reto 4 — Mr-Robot · Responsable: <span style="color:#c1121f">[nombre]</span></h3>
+      <p>Enfoque: explotación web y escalada de privilegios — Red Team (TryHackMe o VulnHub). Tres claves progresivas.</p>
+      <div class="tmpl">
+        <b>Qué rellenar:</b>
+        <ul>
+          <li>KPIs: 3 keys, hallazgos, severidad.</li>
+          <li>Tarjetas de hallazgos (enumeración web, explotación, escalada) con OWASP 2025.</li>
+          <li>Riesgos aportados y su prioridad/residual.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONSOLIDADO ============ -->
+  <section class="panel" id="glob">
+    <div class="note">Vista consolidada del equipo. Se habilita a medida que los compañeros completan sus retos.
+      El <b>techo de 5.0</b> exige los 4 retos + un aporte adicional sustancial validado (este dashboard es ese aporte).</div>
+    <h2 class="sec">Progreso por nivel</h2>
+    <div id="globbars"></div>
+    <table class="mini" style="margin-top:14px">
+      <tr><th>Nivel</th><th>Retos requeridos</th><th>Techo</th><th>Estado</th></tr>
+      <tr><td>1</td><td>Marketplace</td><td>3.0</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Completado</span></td></tr>
+      <tr><td>2</td><td>+ PHP2Shell</td><td>3.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
+      <tr><td>3</td><td>+ dOOMs Day</td><td>4.0</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
+      <tr><td>4</td><td>+ Mr-Robot</td><td>4.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
+      <tr><td>5</td><td>Los 4 + aporte extraordinario</td><td>5.0</td><td><span class="pill">Requiere 1–4 + aporte</span></td></tr>
+    </table>
+    <p style="font-size:12.5px;color:var(--muted)">Riesgos consolidados actuales (solo Reto 1): <b>R-01…R-05</b>.
+      Los compañeros añadirán R-06+ desde sus retos.</p>
+  </section>
+
+  <div class="foot">Dashboard interactivo · Hackathon CyberRisk 2.0 — The Next Level · Documento académico · InnovaSec S.A.S. (ficticio)</div>
+</div>
+
+<script>
+// ---- datos Reto 1 ----
+const findings = [
+  {id:"H-01a", t:"XSS almacenado → robo de sesión admin", sev:"crit", owasp:"Injection (XSS)", imp:"Suplantación del administrador (michael).", flag:"FLAG 1"},
+  {id:"H-01b", t:"SQL Injection (UNION, numérica)", sev:"crit", owasp:"Injection", imp:"Exfiltración completa de la base de datos (usuarios y mensajes).", flag:""},
+  {id:"H-01c", t:"Credenciales en texto claro", sev:"alto", owasp:"Cryptographic Failures", imp:"Contraseña SSH de jake expuesta en un mensaje interno.", flag:""},
+  {id:"H-01d", t:"sudo NOPASSWD + tar wildcard injection", sev:"alto", owasp:"Security Misconfiguration (CWE-78)", imp:"Escalada jake → michael.", flag:""},
+  {id:"H-01e", t:"Usuario en grupo docker", sev:"crit", owasp:"Security Misconfiguration (CWE-250)", imp:"Escalada michael → root (FLAG 3).", flag:"FLAG 3"},
+  {id:"H-01f", t:"Broken Access Control (panel admin)", sev:"alto", owasp:"Broken Access Control", imp:"Un usuario normal accede a /admin y lee datos de terceros (FLAG 2 vía cadena).", flag:"FLAG 2"}
+];
+const risks = {
+  "R-01":{n:"Robo de sesión / acceso no autorizado", a:"Aplicación web", v:"XSS almacenado + cookie sin HttpOnly", i:4,p:3},
+  "R-02":{n:"Divulgación de información", a:"Base de datos", v:"SQL Injection", i:4,p:3},
+  "R-03":{n:"Escalada a root", a:"Servidor (SO)", v:"sudo inseguro + tar wildcard + grupo docker", i:4,p:2},
+  "R-04":{n:"Acceso no autorizado", a:"Credenciales de usuarios", v:"Secretos en texto claro", i:3,p:3},
+  "R-05":{n:"Incidente no detectado", a:"Capacidad de detección", v:"Registro y monitoreo insuficientes", i:3,p:3}
+};
+function nivel(v){return v>=12?["Crítico","#c1121f"]:v>=7?["Alto","#b45f00"]:v>=4?["Medio","#e6b800"]:["Bajo","#1f7a6f"]}
+
+// ---- render tarjetas ----
+const cardsEl=document.getElementById('cards');
+function renderCards(f){
+  cardsEl.innerHTML=findings.filter(x=>f==="all"||x.sev===f).map(x=>`
+    <div class="card ${x.sev}">
+      <div class="id">${x.id}</div>
+      <h4>${x.t}</h4>
+      <p>${x.imp}</p>
+      <div class="tags">
+        <span class="sev ${x.sev}">${x.sev==="crit"?"Crítico":x.sev==="alto"?"Alto":x.sev}</span>
+        <span class="owasp">${x.owasp}</span>
+        ${x.flag?`<span class="flagx">${x.flag}</span>`:""}
+      </div>
+    </div>`).join("");
+}
+renderCards("all");
+document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); renderCards(b.dataset.f);
+});
+
+// ---- barras de prioridad ----
+const barsEl=document.getElementById('bars');
+barsEl.innerHTML=Object.entries(risks).sort((a,b)=>(b[1].i*b[1].p)-(a[1].i*a[1].p)).map(([k,r])=>{
+  const v=r.i*r.p, nl=nivel(v);
+  return `<div class="bar"><div class="t"><b>${k}</b><span>${v} · ${nl[0]}</span></div>
+    <div class="track"><div class="fill" style="width:${v/16*100}%;background:${nl[1]}">${v}</div></div></div>`;
+}).join("");
+
+// ---- detalle de riesgo (clic en mapa de calor) ----
+const det=document.getElementById('rdetail');
+document.querySelectorAll('.rk').forEach(el=>el.onclick=()=>{
+  const r=risks[el.dataset.r]; if(!r)return;
+  const v=r.i*r.p, nl=nivel(v);
+  det.classList.add('show');
+  det.innerHTML=`<b>${el.dataset.r} — ${r.n}</b><br>
+    <b>Activo:</b> ${r.a} · <b>Vulnerabilidad:</b> ${r.v}<br>
+    <b>Impacto:</b> ${r.i} × <b>Probabilidad:</b> ${r.p} = <b style="color:${nl[1]}">${v} (${nl[0]})</b>`;
+});
+
+// ---- barras consolidado ----
+const gb=document.getElementById('globbars');
+const prog=[["Nivel 1 — Marketplace",100],["Nivel 2 — PHP2Shell",0],["Nivel 3 — dOOMs Day",0],["Nivel 4 — Mr-Robot",0]];
+gb.innerHTML=prog.map(([t,v])=>`<div class="bar"><div class="t"><b>${t}</b><span>${v}%</span></div>
+  <div class="track"><div class="fill" style="width:${Math.max(v,3)}%;background:${v?'#1f7a6f':'#9aa4b2'}">${v?v+'%':''}</div></div></div>`).join("");
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); document.getElementById(t.dataset.p).classList.add('active');
+});
+</script>
+</body>
+</html>
