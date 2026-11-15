@@ -425,5 +425,11 @@ PHP2Shell, dOOMs Day y Mr-Robot <span class="badge b-pend">PENDIENTE</span>.</p>
 <p style="text-align:center;font-size:11px;color:#8793a5">Informe generado para la Hackathon CyberRisk 2.0 — The Next Level · InnovaSec S.A.S. (escenario ficticio) · Documento académico</p>
 
 </div>
+<script>
+  // Al abrir con #print (desde el botón del dashboard), lanza el diálogo de impresión -> Guardar como PDF
+  if (location.hash.indexOf('print') !== -1 || location.search.indexOf('print=1') !== -1) {
+    window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 600); });
+  }
+</script>
 </body>
 </html>
