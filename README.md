@@ -22,12 +22,29 @@ Visualización de hallazgos, riesgos y prioridades por reto, más el informe té
 
 ```
 index.html                 ← Dashboard (página principal de GitHub Pages)
-Informe-CyberRisk2.0.html  ← Informe técnico completo (20 apartados) — Reto 1
+Informe-CyberRisk2.0.html  ← Informe técnico completo (20 apartados) — FUENTE a editar
+Informe-CyberRisk2.0.pdf   ← PDF consolidado (ENTREGABLE final, apartados 12/13)
+generar-pdf.bat            ← Regenera el PDF desde el HTML (doble clic)
 evidencias/                ← Capturas del Reto 1 (mk-00…mk-21)
 Reto1-Marketplace-COMPLETO.md   ← Desarrollo técnico Reto 1
 Reto1-Marketplace-PasoAPaso.md  ← Walkthrough Reto 1
 README.md                  ← Este archivo
 ```
+
+## ⚠ IMPORTANTE — El entregable final es el PDF
+
+El entregable oficial (apartados 12 y 13 del enunciado) es **un único PDF**: `Informe-CyberRisk2.0.pdf`.
+Ese PDF se genera a partir de **`Informe-CyberRisk2.0.html`**, que es el archivo que se edita.
+
+**Flujo para todo el equipo:**
+1. Edita el contenido en **`Informe-CyberRisk2.0.html`** (tu apartado 6 del reto, hallazgos, etc.)
+   y/o tu panel en `index.html`.
+2. **Regenera el PDF**: doble clic en **`generar-pdf.bat`** (usa Edge/Chrome, no instala nada).
+   - Alternativa: abre el HTML en el navegador → **Ctrl+P → Guardar como PDF**.
+3. Sube los cambios (HTML, PDF y tus evidencias) en tu rama y abre el Pull Request.
+
+> No edites el `.pdf` a mano: siempre se **regenera** desde el HTML para que quede consistente.
+> El PDF actual cubre el **Nivel 1 (Reto 1)**; se vuelve a generar cuando se sumen los retos 2–4.
 
 Cuando cada compañero haga su reto, añade sus evidencias en su **propia carpeta** para no chocar:
 `evidencias-reto2/`, `evidencias-reto3/`, `evidencias-reto4/`.
