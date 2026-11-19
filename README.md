@@ -12,7 +12,7 @@ Visualización de hallazgos, riesgos y prioridades por reto, más el informe té
 | Reto | Laboratorio | Responsable | Estado |
 |------|-------------|-------------|--------|
 | 1 | The Marketplace (web) | **Cristian Felipe Cogollo Rodríguez** | ✅ Completo |
-| 2 | PHP2Shell (CVE 2026) | Andrey David Morales Díaz | ⏳ Pendiente |
+| 2 | PHP2Shell (CVE 2026) | **Andrey David Morales Díaz** | ✅ Completo (flag + cadena RCE; evidencias en `evidencias-reto2/`) |
 | 3 | dOOMs Day (Blue Team) | Andrey David Morales Díaz | ⏳ Pendiente |
 | 4 | Mr-Robot (web + escalada) | Wilson Javier Gómez Mantilla | ⏳ Pendiente |
 
@@ -26,6 +26,7 @@ Informe-CyberRisk2.0.html  ← Informe técnico completo (20 apartados) — FUEN
 Informe-CyberRisk2.0.pdf   ← PDF consolidado (ENTREGABLE final, apartados 12/13)
 generar-pdf.bat            ← Regenera el PDF desde el HTML (doble clic)
 evidencias/                ← Capturas del Reto 1 (mk-00…mk-21)
+evidencias-reto2/          ← Capturas del Reto 2 (php-00…php-02)
 Reto1-Marketplace-COMPLETO.md   ← Desarrollo técnico Reto 1
 Reto1-Marketplace-PasoAPaso.md  ← Walkthrough Reto 1
 README.md                  ← Este archivo
