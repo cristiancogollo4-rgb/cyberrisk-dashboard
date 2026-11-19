@@ -4,143 +4,211 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard CyberRisk 2.0 — Hallazgos · Riesgos · Prioridades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --azul:#0b2545; --azul2:#13315c; --acento:#00b4d8; --rojo:#c1121f; --naranja:#b45f00;
-    --amarillo:#e6b800; --verde:#1f7a6f; --gris:#f4f6fb; --borde:#d7dee8; --texto:#1a1f2b;
-    --panel:#ffffff; --muted:#5a6472;
+    --ink:#111a2b; --ink-2:#17223a; --ink-3:#24324e;
+    --paper:#f4f6f9; --surface:#ffffff;
+    --line:#e3e7ef; --line-soft:#eef1f6;
+    --text:#1b2333; --muted:#64708a;
+    --accent:#0e7490;
+    --team-red:#b3261e; --team-red-tint:#fbecea;
+    --team-blue:#1b50a3; --team-blue-tint:#e9f0fb;
+    /* severidad — colores de datos (coinciden con el JS) */
+    --rojo:#c1121f; --naranja:#b45f00; --amarillo:#e6b800; --verde:#1f7a6f;
+    /* alias heredados usados por marcado y estilos existentes */
+    --azul:#111a2b; --azul2:#24324e; --acento:#0e7490; --gris:#f3f5f9;
+    --borde:#e3e7ef; --texto:#1b2333; --panel:#ffffff;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
   }
   *{box-sizing:border-box}
-  body{font-family:"Segoe UI",system-ui,Arial,sans-serif;color:var(--texto);margin:0;
-       background:linear-gradient(180deg,#eef3fb,#f7f9fd 240px);line-height:1.5;font-size:14px}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 60px}
-  header.top{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:26px 0 20px;
-             box-shadow:0 2px 12px rgba(11,37,69,.25)}
+  body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--text);margin:0;
+       background:var(--paper);line-height:1.55;font-size:14px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px 64px}
+  code{font-family:var(--mono);font-size:.86em;background:#eef1f6;padding:1px 5px;border-radius:4px;color:#334}
+
+  /* masthead */
+  header.top{background:linear-gradient(160deg,#101a2d,#1a2740);color:#fff}
   header.top .wrap{padding-top:0;padding-bottom:0}
-  header.top .sub{color:var(--acento);letter-spacing:1.5px;font-size:12px;font-weight:700;text-transform:uppercase}
-  header.top h1{margin:4px 0 2px;font-size:26px;color:#fff}
-  header.top .meta{opacity:.85;font-size:12.5px}
+  .mast{display:flex;justify-content:space-between;align-items:flex-end;gap:26px;flex-wrap:wrap;
+        padding:24px 0 22px;border-top:3px solid var(--accent)}
+  .kicker{font-size:12px;font-weight:600;color:#7fd3e6;margin-bottom:8px}
+  .mast h1{margin:0 0 15px;font-size:27px;line-height:1.14;font-weight:700;letter-spacing:-.01em;color:#fff}
+  .scope{display:flex;flex-wrap:wrap;gap:9px 28px}
+  .scope span{display:flex;flex-direction:column;line-height:1.3;font-size:13px;color:#e4ebf6}
+  .scope i{font-style:normal;font-size:10.5px;color:#8695b0;font-weight:600;margin-bottom:2px}
+  .scope small{color:#8695b0}
+  .hdr-actions{display:flex;flex-wrap:wrap;gap:10px}
+  .btn-report{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:13px;
+       padding:10px 15px;border-radius:9px;transition:.15s;line-height:1.1;background:#fff;color:#14233c;border:1px solid #fff}
+  .btn-report:hover{background:#e9f0f7}
+  .btn-report .ic{font-size:15px}
+  .btn-report .sub{display:block;font-weight:500;font-size:11px;opacity:.6;margin-top:2px}
+  .btn-sec{background:transparent;color:#dfe8f4;border:1px solid rgba(255,255,255,.3)}
+  .btn-sec:hover{background:rgba(255,255,255,.09)}
+
   /* tabs */
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 4px}
-  .tab{border:1px solid var(--borde);background:#fff;border-radius:10px 10px 0 0;padding:10px 16px;
-       cursor:pointer;font-weight:600;color:var(--azul2);font-size:13.5px;display:flex;align-items:center;gap:8px;
-       border-bottom:3px solid transparent;transition:.15s}
-  .tab:hover{background:var(--gris)}
-  .tab.active{border-bottom-color:var(--acento);color:var(--azul);box-shadow:0 -2px 8px rgba(0,0,0,.05)}
-  .tab .dot{width:9px;height:9px;border-radius:50%}
-  .dot-ok{background:#1f7a6f}.dot-pend{background:#9aa4b2}
-  .tab .st{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;color:#fff}
-  .st-ok{background:#1f7a6f}.st-pend{background:#8793a5}
-  .panel{display:none;background:var(--panel);border:1px solid var(--borde);border-radius:0 12px 12px 12px;
-         padding:22px;box-shadow:0 4px 18px rgba(11,37,69,.06)}
-  .panel.active{display:block;animation:fade .25s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  h2.sec{color:var(--azul);font-size:16px;border-left:4px solid var(--acento);padding-left:10px;margin:26px 0 12px}
-  h2.sec:first-of-type{margin-top:4px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 16px}
+  .tab{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;cursor:pointer;
+       font-weight:600;color:var(--muted);font-size:12.8px;display:flex;align-items:center;gap:8px;transition:.12s}
+  .tab:hover{color:var(--ink);border-color:#c7d0de}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tab .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .dot-ok{background:var(--verde)}.dot-pend{background:#aab4c5}
+  .tab.active .dot-ok{background:#49e6a3}
+  .tab .st{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.02em}
+  .st-ok{background:#e4f3ee;color:#136551}.st-pend{background:#eef1f6;color:#64708a}
+  .tab.active .st{background:rgba(255,255,255,.16);color:#fff}
+
+  /* panels */
+  .panel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+         padding:26px 26px 30px;box-shadow:0 10px 30px -18px rgba(16,26,45,.22)}
+  .panel.active{display:block;animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  /* section headings */
+  h2.sec{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:15px;font-weight:700;
+         letter-spacing:-.005em;margin:30px 0 13px}
+  h2.sec::before{content:"";width:16px;height:3px;border-radius:3px;background:var(--accent);flex:none}
+  h2.sec:first-of-type{margin-top:6px}
+
   /* KPIs */
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:4px 0 6px}
-  .kpi{background:linear-gradient(135deg,#fff,#f3f7fd);border:1px solid var(--borde);border-radius:12px;padding:14px 16px}
-  .kpi .n{font-size:28px;font-weight:800;color:var(--azul);line-height:1}
-  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
-  .kpi .n small{font-size:14px;color:var(--muted);font-weight:600}
-  /* findings */
-  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
-  .filters .lbl{font-size:12px;color:var(--muted);margin-right:2px}
-  .fbtn{border:1px solid var(--borde);background:#fff;border-radius:20px;padding:5px 13px;cursor:pointer;
-        font-size:12.5px;font-weight:600;color:var(--azul2)}
-  .fbtn.active{background:var(--azul);color:#fff;border-color:var(--azul)}
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-  .card{border:1px solid var(--borde);border-left-width:5px;border-radius:10px;padding:13px 15px;background:#fff;
-        transition:.15s}
-  .card:hover{box-shadow:0 4px 14px rgba(0,0,0,.09);transform:translateY(-1px)}
-  .card.crit{border-left-color:var(--rojo)} .card.alto{border-left-color:var(--naranja)}
-  .card.medio{border-left-color:var(--amarillo)} .card.bajo{border-left-color:var(--verde)}
-  .card .id{font-family:Consolas,monospace;font-size:11.5px;color:var(--muted);font-weight:700}
-  .card h4{margin:3px 0 6px;font-size:14.5px;color:var(--azul)}
-  .card p{margin:0 0 8px;font-size:12.6px;color:#333}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:2px 0 4px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:16px;right:16px;top:0;height:2px;
+       background:linear-gradient(90deg,var(--accent),transparent)}
+  .kpi .n{font-size:27px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.3}
+  .kpi .n small{font-size:14px;color:var(--muted);font-weight:500}
+
+  /* teams */
+  .teams{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:2px 0}
+  @media(max-width:720px){.teams{grid-template-columns:1fr}}
+  .team{border:1px solid var(--line);border-radius:12px;padding:16px 18px 6px;background:var(--surface)}
+  .team.red{border-top:3px solid var(--team-red)}
+  .team.blue{border-top:3px solid var(--team-blue)}
+  .team .thd{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .team .ti{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+  .team.red .ti{background:var(--team-red-tint);color:var(--team-red)}
+  .team.blue .ti{background:var(--team-blue-tint);color:var(--team-blue)}
+  .team .tn{font-weight:700;font-size:14px;line-height:1.1}
+  .team.red .tn{color:var(--team-red)}.team.blue .tn{color:var(--team-blue)}
+  .team .tr{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .team ul{list-style:none;margin:0;padding:0}
+  .team li{position:relative;padding:8px 0 8px 18px;font-size:12.7px;color:#2b3444;border-top:1px solid var(--line-soft);line-height:1.45}
+  .team li:first-child{border-top:0}
+  .team li::before{content:"";position:absolute;left:2px;top:14px;width:6px;height:6px;border-radius:50%}
+  .team.red li::before{background:var(--team-red)}.team.blue li::before{background:var(--team-blue)}
+  .team li b{color:var(--ink)}
+  .team .note-r3{font-size:11.8px;color:var(--muted);margin:0 0 4px;padding:9px 11px;background:var(--line-soft);
+       border-radius:8px;line-height:1.45}
+
+  /* findings cards */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 14px}
+  .filters .lbl{font-size:12px;color:var(--muted)}
+  .fbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 13px;cursor:pointer;
+        font-size:12.5px;font-weight:600;color:var(--muted);transition:.12s}
+  .fbtn:hover{border-color:#c7d0de;color:var(--ink)}
+  .fbtn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .card{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:11px;padding:14px 16px;
+        background:var(--surface);transition:.14s}
+  .card:hover{box-shadow:0 10px 24px -14px rgba(16,26,45,.3);border-color:#d6dde9}
+  .card.crit{border-left-color:var(--rojo)}.card.alto{border-left-color:var(--naranja)}
+  .card.medio{border-left-color:var(--amarillo)}.card.bajo{border-left-color:var(--verde)}
+  .card .id{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .card h4{margin:5px 0 7px;font-size:14px;color:var(--ink);font-weight:700;line-height:1.25}
+  .card p{margin:0 0 10px;font-size:12.6px;color:#43506a;line-height:1.5}
   .card .tags{display:flex;gap:6px;flex-wrap:wrap}
-  .sev{display:inline-block;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:700;color:#fff}
-  .sev.crit{background:var(--rojo)} .sev.alto{background:var(--naranja)}
-  .sev.medio{background:var(--amarillo);color:#4a3b00} .sev.bajo{background:var(--verde)}
-  .owasp{display:inline-block;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;
-         background:#e7eef7;color:var(--azul2)}
-  .flagx{display:inline-block;background:#06202a;color:#4ee6a8;padding:2px 8px;border-radius:5px;
-         font-family:Consolas,monospace;font-size:11px}
+  .sev{display:inline-block;padding:2px 9px;border-radius:6px;font-size:10.5px;font-weight:700;color:#fff}
+  .sev.crit{background:var(--rojo)}.sev.alto{background:var(--naranja)}
+  .sev.medio{background:var(--amarillo);color:#4a3b00}.sev.bajo{background:var(--verde)}
+  .owasp{display:inline-block;padding:2px 9px;border-radius:6px;font-size:10.5px;font-weight:600;background:#eef1f6;color:#44506a}
+  .flagx{display:inline-block;background:#0d1f29;color:#49e6a3;padding:2px 8px;border-radius:5px;font-family:var(--mono);font-size:10.5px}
+
   /* two-col */
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
   @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+
   /* heatmap */
-  .heat{border-collapse:collapse;margin:6px 0}
-  .heat td,.heat th{border:1px solid #c3ccd8;width:70px;height:52px;text-align:center;vertical-align:middle;
-                    font-size:11px;font-weight:600;position:relative}
-  .heat th{background:var(--azul);color:#fff;width:auto;padding:4px 8px;height:auto}
-  .heat .rh{background:var(--azul2);color:#fff}
-  .h-v{background:#d5f5e3}.h-m{background:#fdebd0}.h-a{background:#f6c9a8}.h-r{background:#f1948a}
-  .rk{display:inline-block;background:#fff;border:1px solid #556;border-radius:5px;padding:1px 5px;margin:1px;
-      font-size:10.5px;font-weight:700;cursor:pointer}
-  .rk:hover{background:var(--azul);color:#fff}
-  .legend{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;font-size:11px}
-  .legend span{padding:2px 9px;border-radius:10px;font-weight:700;color:#fff}
+  .heat{border-collapse:separate;border-spacing:3px;margin:8px 0}
+  .heat td,.heat th{width:60px;height:48px;text-align:center;vertical-align:middle;font-size:11px;font-weight:600;border-radius:6px}
+  .heat th{background:transparent;color:var(--muted);width:auto;height:auto;padding:2px 6px}
+  .heat .rh{background:transparent;color:var(--muted)}
+  .h-v{background:#d9f2e4}.h-m{background:#fbeccb}.h-a{background:#f6cfae}.h-r{background:#f3b0a8}
+  .rk{display:inline-block;background:rgba(255,255,255,.88);border:1px solid rgba(20,30,50,.22);border-radius:5px;
+      padding:1px 5px;margin:1px;font-size:10px;font-weight:700;color:#1b2333;cursor:pointer;font-family:var(--mono)}
+  .rk:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .legend{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0;font-size:10.5px}
+  .legend span{padding:2px 9px;border-radius:5px;font-weight:700;color:#fff}
+
   /* priority bars */
-  .bar{margin:9px 0}
-  .bar .t{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px}
-  .bar .t b{color:var(--azul)}
-  .bar .track{background:#edf1f7;border-radius:6px;height:16px;overflow:hidden}
+  .bar{margin:11px 0}
+  .bar .t{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+  .bar .t b{color:var(--ink);font-family:var(--mono);font-size:12px}
+  .bar .track{background:#eef1f6;border-radius:6px;height:14px;overflow:hidden}
   .bar .fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;
-             padding-right:7px;color:#fff;font-size:10.5px;font-weight:700}
-  table.mini{border-collapse:collapse;width:100%;font-size:12.3px;margin:6px 0}
-  table.mini th,table.mini td{border:1px solid var(--borde);padding:6px 8px;text-align:left;vertical-align:top}
-  table.mini th{background:var(--azul);color:#fff;font-weight:600}
-  table.mini tr:nth-child(even) td{background:var(--gris)}
-  .detail{background:var(--gris);border:1px dashed var(--borde);border-radius:8px;padding:12px 14px;margin:10px 0;
-          font-size:12.6px;display:none}
+             padding-right:7px;color:#fff;font-size:10px;font-weight:700}
+
+  /* mini tables */
+  table.mini{border-collapse:collapse;width:100%;font-size:12.4px;margin:6px 0}
+  table.mini th,table.mini td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  table.mini th{background:#f3f5f9;color:var(--ink);font-weight:600;border-bottom:2px solid #dde3ec}
+  table.mini tr:nth-child(even) td{background:#fafbfd}
+
+  /* detail / notes / misc */
+  .detail{background:#f6f8fb;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;
+          padding:12px 14px;margin:12px 0;font-size:12.6px;display:none}
   .detail.show{display:block}
-  .pend{text-align:center;padding:50px 20px;color:var(--muted)}
-  .pend .big{font-size:40px;opacity:.3}
-  .pend h3{color:var(--azul2);margin:10px 0 6px}
-  .tmpl{max-width:640px;margin:16px auto 0;text-align:left;background:var(--gris);border:1px solid var(--borde);
+  .note{background:#f6f8fb;border:1px solid var(--line);border-left:3px solid var(--accent);padding:11px 14px;
+        border-radius:8px;font-size:12.6px;margin:14px 0;color:#3a4458}
+  .note b{color:var(--ink)}
+  .pend{text-align:center;padding:54px 20px;color:var(--muted)}
+  .pend .big{font-size:42px;opacity:.25}
+  .pend h3{color:var(--ink);margin:12px 0 6px;font-size:16px}
+  .tmpl{max-width:640px;margin:16px auto 0;text-align:left;background:#f6f8fb;border:1px solid var(--line);
         border-radius:10px;padding:16px 18px;font-size:12.8px}
-  .tmpl b{color:var(--azul)}
-  .foot{text-align:center;font-size:11px;color:#8793a5;margin-top:26px}
-  .note{background:#fff7e6;border-left:4px solid #b45f00;padding:9px 13px;border-radius:4px;font-size:12.5px;margin:12px 0}
-  .pill{font-size:10.5px;background:#e7eef7;color:var(--azul2);border-radius:10px;padding:2px 8px;font-weight:600}
-  .btn-report{display:inline-flex;align-items:center;gap:9px;margin-top:14px;background:#00b4d8;color:#042b36;
-       text-decoration:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:10px;border:1px solid #0a94b3;
-       transition:.15s}
-  .btn-report:hover{background:#19c3e6}
-  .btn-report .ic{font-size:16px}
-  .btn-report .sub{font-weight:500;font-size:11.5px;opacity:.8}
-  .hdr-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-  .hdr-actions .btn-report{margin-top:0}
-  .btn-sec{background:rgba(255,255,255,.12);color:#eaf6fb;border:1px solid rgba(255,255,255,.35)}
-  .btn-sec:hover{background:rgba(255,255,255,.22)}
-  .reportbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:#eef6fb;border:1px solid #cfe6f2;
-       border-radius:10px;padding:12px 16px;margin:4px 0 16px}
-  .reportbar .txt{font-size:12.8px;color:var(--azul2)}
-  .reportbar a{margin-top:0}
+  .tmpl b{color:var(--ink)}
+  .foot{text-align:center;font-size:11px;color:#8c97ab;margin-top:30px;padding-top:16px;border-top:1px solid var(--line)}
+  .pill{font-size:10.5px;background:#eef1f6;color:#44506a;border-radius:20px;padding:2px 9px;font-weight:600}
+  .reportbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+       background:#f6f8fb;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:16px 0}
+  .reportbar .txt{font-size:12.6px;color:#3a4458}
+  .reportbar .btn-report{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .reportbar .btn-report:hover{background:#1e2c46}
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="sub">Hackathon CyberRisk 2.0 · The Next Level</div>
-    <h1>Dashboard ejecutivo — Hallazgos · Riesgos · Prioridades</h1>
-    <div class="meta">InnovaSec S.A.S. (escenario ficticio) · Equipo de 3 integrantes · Actualizado 15/11/2026 ·
-      Nivel actual: <b>1</b> (Reto 1 completado)</div>
-    <div class="hdr-actions">
-      <a class="btn-report" href="Informe-CyberRisk2.0.html" target="_blank" rel="noopener">
-        <span class="ic">📄</span>
-        <span>Ver informe<br><span class="sub">20 apartados · evidencias</span></span>
-      </a>
-      <a class="btn-report btn-sec" href="Informe-CyberRisk2.0.pdf" download>
-        <span class="ic">⬇️</span>
-        <span>Descargar PDF<br><span class="sub">Entregable consolidado</span></span>
-      </a>
-      <a class="btn-report btn-sec" href="Informe-CyberRisk2.0.html#print" target="_blank" rel="noopener">
-        <span class="ic">🖨️</span>
-        <span>Generar PDF<br><span class="sub">Imprimir → Guardar como PDF</span></span>
-      </a>
+    <div class="mast">
+      <div class="mast-id">
+        <div class="kicker">Evaluación de seguridad · Red Team / Blue Team · ISO 27001</div>
+        <h1>CyberRisk 2.0 — Tablero de la evaluación</h1>
+        <div class="scope">
+          <span><i>Cliente</i>InnovaSec S.A.S. <small>(ficticio)</small></span>
+          <span><i>Consultora</i>Equipo de 3 · Ciberseguridad</span>
+          <span><i>Estado</i>Niveles 1&ndash;3 completados</span>
+          <span><i>Actualizado</i>18/11/2026</span>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <a class="btn-report" href="Informe-CyberRisk2.0.html" target="_blank" rel="noopener">
+          <span class="ic">📄</span>
+          <span>Ver informe<span class="sub">20 apartados · evidencias</span></span>
+        </a>
+        <a class="btn-report btn-sec" href="Informe-CyberRisk2.0.pdf" download>
+          <span class="ic">⬇</span>
+          <span>Descargar PDF<span class="sub">Entregable consolidado</span></span>
+        </a>
+        <a class="btn-report btn-sec" href="Informe-CyberRisk2.0.html#print" target="_blank" rel="noopener">
+          <span class="ic">🖨</span>
+          <span>Generar PDF<span class="sub">Imprimir → Guardar</span></span>
+        </a>
+      </div>
     </div>
   </div>
 </header>
@@ -173,6 +241,29 @@
       <div class="kpi"><div class="n">3</div><div class="l">Riesgos críticos</div></div>
       <div class="kpi"><div class="n">root</div><div class="l">Nivel de compromiso</div></div>
       <div class="kpi"><div class="n">5</div><div class="l">Controles ISO 27001</div></div>
+    </div>
+
+    <h2 class="sec">Trabajo por equipo</h2>
+    <div class="teams">
+      <div class="team red">
+        <div class="thd"><div class="ti">&#9876;</div><div><div class="tn">Red Team</div><div class="tr">Ofensiva · explotación web hasta root</div></div></div>
+      <ul>
+        <li>Reconocimiento con <b>nmap</b>: SSH, nginx y app Node.js</li>
+        <li><b>XSS almacenado</b> en los anuncios → robo de la cookie del administrador</li>
+        <li><b>SQL Injection</b> (UNION) → volcado de usuarios y mensajes</li>
+        <li>Escalada <b>jake → michael</b> (sudo + tar wildcard) y <b>michael → root</b> (grupo docker)</li>
+        <li>3 de 3 <b>flags</b> capturadas</li>
+      </ul>
+      </div>
+      <div class="team blue">
+        <div class="thd"><div class="ti">&#128737;</div><div><div class="tn">Blue Team</div><div class="tr">Defensa · detección y endurecimiento</div></div></div>
+      <ul>
+        <li>Logs a vigilar: <b>nginx</b> access/error, <b>auth.log</b>, <b>auditd</b> sobre /opt/backups</li>
+        <li>Detección de patrones <code>UNION/SELECT</code>, <code>&lt;script&gt;</code> y ráfagas de 403</li>
+        <li>Controles: output encoding + <b>CSP</b>, cookies <b>HttpOnly</b>, consultas parametrizadas</li>
+        <li>Hardening: revisar reglas <code>sudo</code>, retirar del grupo <b>docker</b>, centralizar en SIEM</li>
+      </ul>
+      </div>
     </div>
 
     <h2 class="sec">Hallazgos — explotación controlada</h2>
@@ -264,6 +355,28 @@
       <div class="kpi"><div class="n">&lt;10<small> s</small></div><div class="l">Cadena completa</div></div>
       <div class="kpi"><div class="n">www-data</div><div class="l">Nivel de compromiso (RCE)</div></div>
       <div class="kpi"><div class="n">14<small> años</small></div><div class="l">PHP afectado (desde 5.4.0)</div></div>
+    </div>
+
+    <h2 class="sec">Trabajo por equipo</h2>
+    <div class="teams">
+      <div class="team red">
+        <div class="thd"><div class="ti">&#9876;</div><div><div class="tn">Red Team</div><div class="tr">Ofensiva · RCE sobre el runtime PHP</div></div></div>
+      <ul>
+        <li>Conexión por <b>OpenVPN</b> y <b>SSH</b> a la máquina del laboratorio</li>
+        <li>Confirmación del objetivo: <b>PHP 8.4.26</b> en contenedor tras Apache</li>
+        <li>Ejecución del exploit: fuga de memoria → derrota de <b>ASLR</b> → RCE</li>
+        <li>Shell como <b>www-data</b> y lectura de la flag</li>
+      </ul>
+      </div>
+      <div class="team blue">
+        <div class="thd"><div class="ti">&#128737;</div><div><div class="tn">Blue Team</div><div class="tr">Defensa · parcheo del runtime y detección</div></div></div>
+      <ul>
+        <li>Parchear <b>PHP 8.4.27+</b> y reiniciar todos los workers (fix completo)</li>
+        <li>Desactivar <code>session.upload_progress</code> y <code>opcache</code></li>
+        <li>Rechazar <code>multipart/form-data</code> en el borde; mínimo privilegio</li>
+        <li>Detección: <b>PHPSESSID</b> grande, multipart con muchos campos, OOM</li>
+      </ul>
+      </div>
     </div>
 
     <h2 class="sec">Cadena de explotación</h2>
@@ -427,6 +540,29 @@
       <div class="kpi"><div class="n">7</div><div class="l">Indicadores de ataque</div></div>
     </div>
 
+    <h2 class="sec">Trabajo por equipo</h2>
+    <div class="teams">
+      <div class="team red">
+        <div class="thd"><div class="ti">&#9876;</div><div><div class="tn">Red Team</div><div class="tr">Perspectiva ofensiva · reconstruida del adversario</div></div></div>
+        <div class="note-r3">Laboratorio forense: el equipo no ejecuta un ataque propio. Se reconstruye lo que hizo el adversario a partir de las evidencias.</div>
+      <ul>
+        <li>149 POST multipart para <b>ocupar los workers</b> de Apache</li>
+        <li>Agotamiento de memoria y <b>fuga del heap</b> en la cookie PHPSESSID</li>
+        <li><b>Reverse shell</b> como www-data al puerto 4444</li>
+        <li>Robo de la base de datos <code>devnotes.sqlite</code></li>
+      </ul>
+      </div>
+      <div class="team blue">
+        <div class="thd"><div class="ti">&#128737;</div><div><div class="tn">Blue Team</div><div class="tr">Defensa · investigación forense del incidente</div></div></div>
+      <ul>
+        <li>Análisis de <b>access.log</b>, <b>error.log</b> y <b>Capture.pcap</b> en Kali</li>
+        <li><b>Línea de tiempo</b> del incidente (10 eventos, 28/10/2026)</li>
+        <li>7 <b>indicadores de ataque</b> y la reverse shell identificada</li>
+        <li>Reglas de detección (OOM, segfault, PHPSESSID) y contención</li>
+      </ul>
+      </div>
+    </div>
+
     <h2 class="sec">Línea de tiempo del incidente (28/10/2026, UTC)</h2>
     <ul class="r3-tl">
       <li><span class="h">08:42:52 → 08:43:00</span> · <span class="d"><b>149 POST a /index.php</b> desde 192.168.72.1 con boundary
@@ -584,8 +720,7 @@
 
   <!-- ============ CONSOLIDADO ============ -->
   <section class="panel" id="glob">
-    <div class="note">Vista consolidada del equipo. Se habilita a medida que los compañeros completan sus retos.
-      El <b>techo de 5.0</b> exige los 4 retos + un aporte adicional sustancial validado (este dashboard es ese aporte).</div>
+    <div class="note">Vista consolidada del equipo. <b>Niveles 1&ndash;3 completados</b> (techo 4.0). El <b>techo de 5.0</b> exige los cuatro retos más un aporte adicional sustancial validado — este dashboard es ese aporte.</div>
     <h2 class="sec">Progreso por nivel</h2>
     <div id="globbars"></div>
     <table class="mini" style="margin-top:14px">
@@ -596,8 +731,7 @@
       <tr><td>4</td><td>+ Mr-Robot</td><td>4.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
       <tr><td>5</td><td>Los 4 + aporte extraordinario</td><td>5.0</td><td><span class="pill">Requiere 1–4 + aporte</span></td></tr>
     </table>
-    <p style="font-size:12.5px;color:var(--muted)">Riesgos consolidados actuales (solo Reto 1): <b>R-01…R-05</b>.
-      Los compañeros añadirán R-09+ desde sus retos.</p>
+    <p style="font-size:12.5px;color:var(--muted)">Riesgos consolidados (Retos 1&ndash;3): <b>R-01 … R-11</b>. El Reto 4 (Mr-Robot) añadirá los siguientes.</p>
   </section>
 
   <div class="foot">Dashboard interactivo · Hackathon CyberRisk 2.0 — The Next Level · Documento académico · InnovaSec S.A.S. (ficticio)</div>
@@ -664,7 +798,7 @@ document.querySelectorAll('.rk').forEach(el=>el.onclick=()=>{
 
 // ---- barras consolidado ----
 const gb=document.getElementById('globbars');
-const prog=[["Nivel 1 — Marketplace",100],["Nivel 2 — PHP2Shell",0],["Nivel 3 — dOOMs Day",0],["Nivel 4 — Mr-Robot",0]];
+const prog=[["Nivel 1 — Marketplace",100],["Nivel 2 — PHP2Shell",100],["Nivel 3 — dOOMs Day",100],["Nivel 4 — Mr-Robot",0]];
 gb.innerHTML=prog.map(([t,v])=>`<div class="bar"><div class="t"><b>${t}</b><span>${v}%</span></div>
   <div class="track"><div class="fill" style="width:${Math.max(v,3)}%;background:${v?'#1f7a6f':'#9aa4b2'}">${v?v+'%':''}</div></div></div>`).join("");
 
