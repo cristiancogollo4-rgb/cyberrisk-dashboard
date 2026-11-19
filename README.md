@@ -14,7 +14,7 @@ Visualización de hallazgos, riesgos y prioridades por reto, más el informe té
 | 1 | The Marketplace (web) | **Cristian Felipe Cogollo Rodríguez** | ✅ Completo |
 | 2 | PHP2Shell (CVE 2026) | **Andrey David Morales Díaz** | ✅ Completo (flag + cadena RCE; evidencias en `evidencias-reto2/`) |
 | 3 | dOOMs Day (Blue Team) | **Andrey David Morales Díaz** | ✅ Completo (12/12 preguntas; evidencias en `evidencias-reto3/`) |
-| 4 | Mr-Robot (web + escalada) | Wilson Javier Gómez Mantilla | ⏳ Pendiente |
+| 4 | Mr-Robot (Red Team) | **Wilson Javier Gómez Mantilla** | ✅ Completo (3 keys; evidencias en `evidencias-reto4/`) |
 
 ---
 

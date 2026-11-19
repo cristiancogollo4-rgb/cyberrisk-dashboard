@@ -84,7 +84,7 @@
 Los apartados de gestión (OWASP, riesgos, ISO, Blue Team, plan de tratamiento) se desarrollan a partir de los hallazgos de este
 laboratorio. Los retos 2–4 (PHP2Shell, dOOMs Day, Mr-Robot) se indican como <span class="badge b-pend">PENDIENTE</span>
 y serán desarrollados por los demás integrantes del equipo.<br>
-<b>Actualización Retos 2 y 3:</b> los Retos 2 (PHP2Shell) y 3 (dOOMs Day) están completados y se integran en los apartados 6, 8–15 y 17–20 con los riesgos R-06 a R-11.
+<b>Actualización Retos 2, 3 y 4:</b> los Retos 2 (PHP2Shell), 3 (dOOMs Day) y 4 (Mr-Robot) están completados y se integran en los apartados 6, 8–15 y 17–20 con los riesgos R-06 a R-15. Con el Reto 4 se habilita el <b>Nivel 4 (techo 4.5)</b>.
 </div>
 
 <!-- KPIs -->
@@ -99,7 +99,7 @@ y serán desarrollados por los demás integrantes del equipo.<br>
 <h2 style="margin-top:20px">Contenido</h2>
 <div class="toc">
 1. Portada · 2. Introducción · 3. Objetivos · 4. Alcance y metodología ·
-5. Herramientas · 6. Desarrollo técnico (The Marketplace · PHP2Shell · dOOMs Day) · 7. Informe Red Team ·
+5. Herramientas · 6. Desarrollo técnico (The Marketplace · PHP2Shell · dOOMs Day · Mr-Robot) · 7. Informe Red Team ·
 8. Clasificación OWASP 2025 · 9. Análisis Blue Team · 10. Análisis de impacto ·
 11. Matriz de riesgos · 12. Mapa de calor · 13. Controles ISO 27001 ·
 14. Contramedidas · 15. Plan de tratamiento · 16. Aportes adicionales ·
@@ -157,6 +157,8 @@ IP del atacante (VPN tun0) <code>192.168.144.28</code>.</p>
 <tr><td>Docker</td><td>Escalada final a root</td><td>Abuso de pertenencia al grupo docker</td></tr>
 <tr><td>OpenVPN / SSH (Reto 2)</td><td>Conexión al laboratorio y a la máquina objetivo</td><td>Acceso a la máquina TryHackMe para atacar el servicio local 127.0.0.1:8088</td></tr>
 <tr><td>exploit.py (PHP2Shell, Reto 2)</td><td>Cadena de fuga de memoria + RCE</td><td>Derrotar ASLR y ejecutar comandos como www-data (CVE-2026-109618/619)</td></tr>
+<tr><td>Hydra / Gobuster (Reto 4)</td><td>Fuerza bruta de login y enumeración de rutas</td><td>Obtener credenciales de WordPress y descubrir el panel y archivos sensibles</td></tr>
+<tr><td>John the Ripper (Reto 4)</td><td>Crackeo del hash MD5 del usuario robot</td><td>Recuperar la contraseña en texto plano para el movimiento lateral</td></tr>
 <tr><td>grep / awk / sed / sort / uniq (Reto 3)</td><td>Análisis forense de access.log y error.log</td><td>Filtrar un error.log de 484 MB sin abrirlo en un editor</td></tr>
 <tr><td>tshark / Wireshark (Reto 3)</td><td>Análisis de la captura de red</td><td>Localizar la reverse shell y reconstruir los comandos del atacante</td></tr>
 </table>
@@ -477,6 +479,83 @@ propia de cada comando.</p>
 <h3>6.R3.10 Finalización del laboratorio</h3>
 <div class="fig"><img src="evidencias-reto3/dd-13-badge-solved.png" alt="dOOMs Day resuelto"><figcaption>Fig. R3-17 — Sherlock dOOMs Day resuelto en Hack The Box (usuario amorales96): rango #486, 19 nov 2026, 415 XP.</figcaption></div>
 
+<!-- 6 · RETO 4 -->
+<h2 class="page-break" id="reto4">6. Desarrollo técnico — Reto 4: Mr-Robot (Red Team)</h2>
+<p><b>Responsable:</b> Wilson Javier Gómez Mantilla (Operador Red Team). <b>Laboratorio:</b> TryHackMe – Mr Robot CTF
+(<code>https://tryhackme.com/room/mrrobot</code>). <b>Enfoque:</b> explotación web y escalada de privilegios.</p>
+<p><b>Resumen:</b> el escenario simula un servidor corporativo con un sitio <b>WordPress desactualizado</b>, sin gestión de
+parches ni control de acceso robusto. Encadenando configuraciones inseguras se pasó de usuario anónimo a <b>root</b>, obteniendo
+las <b>tres claves</b> del reto. Toda la actividad se realizó por la VPN autorizada de TryHackMe, desde una Kali Linux.</p>
+
+<div class="kpi">
+  <div class="c"><div class="n">3/3</div><div class="l">Claves obtenidas</div></div>
+  <div class="c"><div class="n">6</div><div class="l">Hallazgos (H-04a…f)</div></div>
+  <div class="c"><div class="n">root</div><div class="l">Nivel de compromiso</div></div>
+  <div class="c"><div class="n">~2 h</div><div class="l">De reconocimiento a root</div></div>
+</div>
+
+<h3>6.R4.1 Reconocimiento</h3>
+<p>Se escanearon puertos y servicios sobre la IP objetivo. El servidor expone SSH (OpenSSH 8.2p1), HTTP y HTTPS (Apache); el
+certificado TLS está autofirmado y vencido desde 2025, lo que confirma un servidor web como principal superficie de ataque.</p>
+<pre><code>nmap -sC -sV -p 22,80,443 &lt;IP_víctima&gt;</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-01-nmap.png" alt="nmap"><figcaption>Fig. R4-1 — Reconocimiento de puertos y servicios con Nmap.</figcaption></div>
+
+<h3>6.R4.2 Enumeración web</h3>
+<p>La consulta de <code>robots.txt</code> reveló dos recursos sensibles sin control de acceso: un diccionario de contraseñas
+(<code>fsocity.dic</code>) y la primera clave del reto. Con Gobuster se confirmó que el sitio corre sobre WordPress
+(<code>wp-login.php</code>, <code>wp-content</code>, <code>xmlrpc.php</code>).</p>
+<pre><code>curl http://&lt;IP_víctima&gt;/robots.txt
+curl http://&lt;IP_víctima&gt;/key-1-of-3.txt
+gobuster dir -u http://&lt;IP_víctima&gt; -w /usr/share/wordlists/dirb/common.txt -x php,txt,html</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-02-key1-robots.png" alt="key1"><figcaption>Fig. R4-2 — Obtención de la Key 1 a partir de robots.txt.</figcaption></div>
+<div class="fig"><img src="evidencias-reto4/mr-03-gobuster-wordpress.png" alt="gobuster"><figcaption>Fig. R4-3 — Enumeración de rutas de WordPress con Gobuster.</figcaption></div>
+
+<h3>6.R4.3 Explotación — obtención de credenciales</h3>
+<p>Partiendo del contexto del escenario se identificó el usuario válido <code>elliot</code>. Con el diccionario
+<code>fsocity.dic</code> (depurado de duplicados) se ejecutó fuerza bruta con Hydra contra el formulario de login, obteniendo la
+credencial <code>elliot : ER28-0652</code>.</p>
+<pre style="white-space:pre-wrap;word-break:break-all"><code>hydra -l elliot -P fsocity_unique.dic &lt;IP_víctima&gt; http-post-form "/wp-login.php:log=^USER^&amp;pwd=^PASS^&amp;wp-submit=Log+In:S=Location" -t 64</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-04-hydra-credenciales.png" alt="hydra"><figcaption>Fig. R4-4 — Credencial de WordPress obtenida mediante Hydra.</figcaption></div>
+
+<h3>6.R4.4 Explotación — ejecución remota de código</h3>
+<p>Con acceso al panel de administración se usó el <b>Editor de Temas</b> (Apariencia → Editor) para reemplazar el contenido de
+<code>404.php</code> por una reverse shell en PHP (pentestmonkey). Al visitar la ruta del archivo modificado, con un listener de
+Netcat a la espera, se obtuvo una shell inversa como usuario <code>daemon</code>: ejecución remota de código.</p>
+<pre><code>nc -lvnp 4444
+curl http://&lt;IP_víctima&gt;/wp-content/themes/twentyfifteen/404.php</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-05-reverse-shell.png" alt="reverse shell"><figcaption>Fig. R4-5 — Shell inversa obtenida como usuario daemon.</figcaption></div>
+
+<h3>6.R4.5 Movimiento lateral</h3>
+<p>En <code>/home/robot/</code> había un archivo de lectura pública (<code>password.raw-md5</code>) con el hash MD5 de la
+contraseña de robot, mientras que la segunda clave solo era legible por su propietario. El hash se craqueó al instante con John,
+obteniendo la contraseña en texto plano; con ella se cambió al usuario robot y se leyó la segunda clave.</p>
+<pre style="white-space:pre-wrap;word-break:break-all"><code>cat /home/robot/password.raw-md5
+john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt robot_hash.txt
+su robot    # contraseña: abcdefghijklmnopqrstuvwxyz</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-06-key2-robot.png" alt="key2"><figcaption>Fig. R4-6 — Key 2 obtenida tras el cambio a usuario robot.</figcaption></div>
+
+<h3>6.R4.6 Escalada de privilegios</h3>
+<p>Como usuario robot se buscaron binarios con el bit <b>SUID</b> activado y se identificó <code>/usr/local/bin/nmap</code>, una
+condición anómala: esa versión antigua de Nmap permite un modo interactivo que posibilita escapar a una shell del sistema
+heredando privilegios de root. Con ello se leyó la tercera clave.</p>
+<pre><code>find / -perm -4000 -type f 2&gt;/dev/null
+nmap --interactive
+nmap&gt; !sh
+cat /root/key-3-of-3.txt</code></pre>
+<div class="fig"><img src="evidencias-reto4/mr-07-suid-nmap.png" alt="suid"><figcaption>Fig. R4-7 — Listado de binarios SUID: se identifica /usr/local/bin/nmap.</figcaption></div>
+<div class="fig"><img src="evidencias-reto4/mr-08-key3-root.png" alt="key3"><figcaption>Fig. R4-8 — Key 3 obtenida con privilegios de root.</figcaption></div>
+
+<h3>6.R4.7 Claves obtenidas</h3>
+<table>
+<tr><th>Clave</th><th>Origen</th><th>Valor</th></tr>
+<tr><td>Key 1</td><td>robots.txt (anónimo)</td><td>073403c8a58a1f80d943455fb30724b9</td></tr>
+<tr><td>Key 2</td><td>usuario robot</td><td>822c73956184f694993bede3eb39f959</td></tr>
+<tr><td>Key 3</td><td>root (SUID nmap)</td><td>04787ddef27c3dee1ee161b21670b4e4</td></tr>
+</table>
+<p><b>Lección:</b> la cadena completa, de reconocimiento a root, no dependió de ninguna vulnerabilidad de día cero, sino de
+errores de configuración acumulados: información expuesta, credenciales débiles, permisos excesivos y un binario SUID mal
+configurado. El hardening básico y consistente es más determinante que la defensa contra amenazas sofisticadas.</p>
+
 <!-- 7 -->
 <h2 class="page-break">7. Informe Red Team consolidado</h2>
 <p><b>Resumen ejecutivo:</b> la plataforma de comercio electrónico de InnovaSec S.A.S. presenta debilidades que, encadenadas,
@@ -511,6 +590,12 @@ mejor una referencia CWE, se indica.</div>
 <tr><td>H-03a</td><td>dOOMs Day: PHP 8.4.26 vulnerable explotado sin autenticación (PHP2Shell) → RCE como www-data</td><td>A03:2025 Software Supply Chain Failures (componente del entorno de ejecución sin parchear); causa raíz CVE-2026-109618 / CVE-2026-109619, relacionada con A10:2025 Mishandling of Exceptional Conditions</td><td>La debilidad no está en el código de la aplicación sino en el runtime PHP desactualizado; la 109618 nace de un mal manejo de la condición de falta de memoria, y la 109619 es un use-after-free (CWE-416), mejor descrita por su CVE/CWE que por una categoría OWASP.</td></tr>
 <tr><td>H-03b</td><td>dOOMs Day: session.upload_progress habilitado y sin límites de tamaño, campos ni anidación</td><td>A02:2025 Security Misconfiguration</td><td>Configuración por defecto innecesaria que abre la ruta confirmada de la 109619 y permite agotar la memoria con formularios de miles de campos.</td></tr>
 <tr><td>H-03c</td><td>dOOMs Day: ataque ruidoso sin alertas y conexión saliente al puerto 4444 permitida</td><td>A09:2025 Security Logging &amp; Alerting Failures</td><td>Los logs registraron 149 POST, errores de memoria y segfaults, pero nada alertó; el servidor pudo abrir una shell saliente sin filtrado egress.</td></tr>
+<tr><td>H-04c</td><td>Mr-Robot: editor de temas de WordPress habilitado → RCE (reverse shell en 404.php)</td><td>A02:2025 Security Misconfiguration</td><td>Función innecesaria en el panel admin que permite ejecutar código del servidor.</td></tr>
+<tr><td>H-04e</td><td>Mr-Robot: binario nmap con bit SUID → escalada a root</td><td>A06:2025 Insecure Design (CWE-250)</td><td>Un binario SUID con modo interactivo permite ejecutar una shell como root.</td></tr>
+<tr><td>H-04b</td><td>Mr-Robot: credenciales débiles de WordPress (elliot) por fuerza bruta</td><td>A07:2025 Authentication Failures</td><td>Sin bloqueo ni MFA, la contraseña cae ante un diccionario con Hydra.</td></tr>
+<tr><td>H-04d</td><td>Mr-Robot: archivo de contraseñas con lectura pública (password.raw-md5)</td><td>A02:2025 Security Misconfiguration</td><td>Permisos excesivos exponen el hash de robot, craqueable al instante.</td></tr>
+<tr><td>H-04a</td><td>Mr-Robot: exposición de información sensible vía robots.txt</td><td>A01:2025 Broken Access Control</td><td>robots.txt revela el diccionario de contraseñas y la primera clave sin control de acceso.</td></tr>
+<tr><td>H-04f</td><td>Mr-Robot: certificado TLS autofirmado y expirado</td><td>A04:2025 Cryptographic Failures</td><td>HTTPS con certificado vencido: sin garantías de identidad ni cifrado vigente.</td></tr>
 </table>
 
 <!-- 9 -->
@@ -557,6 +642,15 @@ sobre <code>/opt/backups</code> y el socket <code>docker.sock</code>. Se recomie
 </table>
 <p><b>Cronología resumida (UTC):</b> 08:42:52 ocupación de workers → 08:42:58 PHP_SESSION_UPLOAD_PROGRESS → 08:43:01.9 agotamiento de memoria y fuga en la cookie → <b>08:43:02 reverse shell</b> → reconocimiento y búsqueda de BD → 08:46:16 caída pid 145 → 08:46:29 reconexión y lectura de devnotes.sqlite → 08:47:42 caída pid 170.</p>
 <p><b>Mecanismos de detección propuestos:</b> las reglas Sigma de PHP2Shell citadas en el writeup (autor Mohammad Alattas) son dos que encajan con esta evidencia: (1) error «Allowed memory size of … exhausted» junto con «Unknown on line 0» o <code>rfc1867.c</code>, y (2) caídas de workers PHP/Apache por SIGSEGV, SIGABRT o SIGBUS (AH00052). Ambas dispararían con E-03 y E-07; su prueba automatizada contra estos logs queda como posible aporte adicional. <b>Contención:</b> aislar el servidor, bloquear 192.168.72.1, terminar la sesión de la shell, rotar credenciales y revisar la integridad de devnotes.sqlite.</p>
+<h3>9.R4 Detección y mitigación de Mr-Robot (Reto 4)</h3>
+<p>Un equipo Blue Team con visibilidad adecuada habría detectado la cadena en varios puntos: un WAF o IPS habría identificado la ráfaga de POST de Hydra contra <code>wp-login.php</code>; un sistema de integridad de archivos (FIM) habría alertado por la modificación no autorizada de <code>404.php</code>; y el monitoreo de conexiones salientes habría detectado la reverse shell al puerto 4444.</p>
+<table>
+<tr><th>Indicador de ataque</th><th>Interpretación</th><th>Contramedida</th></tr>
+<tr><td>Múltiples fallos de login contra wp-login.php desde una IP</td><td>Fuerza bruta (Hydra)</td><td>Bloqueo tras N intentos, MFA, WAF</td></tr>
+<tr><td>Modificación de un archivo de tema (404.php)</td><td>Webshell plantada vía editor</td><td>FIM + DISALLOW_FILE_EDIT</td></tr>
+<tr><td>Conexión saliente del servidor web al puerto 4444</td><td>Reverse shell (acceso inicial)</td><td>Egress filtering; IDS de red</td></tr>
+<tr><td>nmap con SUID y /bin/sh lanzado por Apache</td><td>Escalada y post-explotación</td><td>Mínimo privilegio; auditoría de SUID</td></tr>
+</table>
 
 <!-- 10 -->
 <h2>10. Análisis de impacto (CID)</h2>
@@ -570,6 +664,8 @@ sobre <code>/opt/backups</code> y el socket <code>docker.sock</code>. Se recomie
 <tr><td>Divulgación de memoria (Reto 2)</td><td>Alto</td><td>Bajo</td><td>Bajo</td><td>Fuga de secretos del proceso: contraseñas, cookies y claves TLS</td></tr>
 <tr><td>RCE por PHP2Shell (Reto 3)</td><td>Alto</td><td>Alto</td><td>Medio</td><td>Ejecución de comandos como www-data sin autenticación; caídas de workers (pid 145 y 170)</td></tr>
 <tr><td>Lectura de devnotes.sqlite (Reto 3)</td><td>Alto</td><td>Bajo</td><td>Bajo</td><td>Divulgación del contenido de la aplicación (publicaciones y comentarios)</td></tr>
+<tr><td>RCE por editor de temas (Reto 4)</td><td>Alto</td><td>Alto</td><td>Medio</td><td>Ejecución como daemon; posible webshell persistente</td></tr>
+<tr><td>Escalada a root SUID (Reto 4)</td><td>Alto</td><td>Alto</td><td>Alto</td><td>Control total del servidor; lectura o alteración de cualquier archivo</td></tr>
 </table>
 
 <!-- 11 -->
@@ -590,17 +686,22 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-09</td><td>Servidor de aplicaciones (PHP 8.4.26)</td><td>Ejecución remota de código no autorizada</td><td>Componente sin parchear: CVE-2026-109618 + CVE-2026-109619</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
 <tr><td>R-10</td><td>Base de datos de la aplicación (devnotes.sqlite)</td><td>Divulgación de información</td><td>BD legible por www-data, sin segmentación</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
 <tr><td>R-11</td><td>Capacidad de detección y respuesta</td><td>Incidente no detectado a tiempo</td><td>Sin alertas sobre OOM/segfault ni control de tráfico saliente</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-12</td><td>Aplicación web (WordPress / panel admin)</td><td>Ejecución remota de código no autorizada</td><td>Editor de temas habilitado: reemplazo de 404.php por una shell</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-13</td><td>Sistema operativo del servidor</td><td>Escalada de privilegios a root</td><td>Binario nmap con bit SUID y modo interactivo</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-14</td><td>Panel de administración de WordPress</td><td>Acceso no autorizado</td><td>Credenciales débiles sin bloqueo ni MFA</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-15</td><td>Servidor web (archivos públicos)</td><td>Divulgación de información</td><td>robots.txt y archivo de credenciales legibles; TLS vencido</td><td>3</td><td>2</td><td>6</td><td><span class="badge b-medio">Medio</span></td></tr>
 </table>
 <p><b>Justificación (Reto 2):</b> R-06 y R-07 tienen impacto 4 (ejecución de comandos sin autenticación y fuga de secretos del proceso, incluidas claves TLS) y probabilidad 3 porque los CVE son públicos, con CVSS 9.2, afectan a 14 años de versiones de PHP y se registraron intentos de explotación a las pocas horas de la divulgación; el laboratorio completó la cadena en menos de 10 segundos. R-08 (impacto 3, probabilidad 3) refleja que la configuración por defecto habilita el ataque y que sus marcas, aunque claras en los logs, no generan alertas por sí solas.</p>
 <p><b>Justificación (Reto 3):</b> R-09 tiene impacto 4 porque da ejecución de comandos sin autenticación sobre el servidor, y probabilidad 3 porque los CVE son públicos, tienen CVSS 9.2 y el laboratorio muestra la explotación completa en 10 segundos. R-10 tiene impacto 3: la RCE como www-data basta para leer la base de datos de la aplicación (evidencia E-06), aunque no se comprometió el sistema operativo completo. R-11 tiene impacto 3 y probabilidad 3: el ataque dejó señales claras (149 POST, OOM, segfaults, shell saliente) y ninguna generó alerta, lo que permitió la actividad posterior.</p>
+<p><b>Justificación (Reto 4):</b> R-12 y R-13 son críticos (impacto 4): la RCE da ejecución de código en el servidor y el SUID de nmap da control total como root; probabilidad 3 porque son fallos de configuración conocidos y explotables con herramientas estándar. R-14 (9) refleja credenciales adivinables sin bloqueo; R-15 (6) agrupa la información expuesta y el certificado vencido, de menor impacto directo.</p>
 
 <!-- 12 -->
 <h2>12. Mapa de calor</h2>
 <p>Impacto (filas) × Probabilidad (columnas). Cada celda muestra los riesgos que caen en ella.</p>
 <table class="heat">
 <tr><th></th><th>Prob. 1</th><th>Prob. 2</th><th>Prob. 3</th><th>Prob. 4</th></tr>
-<tr><th>Imp. 4</th><td class="h-a"></td><td class="h-a"><span class="chip">R-03 (8)</span></td><td class="h-r"><span class="chip">R-01</span><span class="chip">R-02</span><span class="chip">R-06</span><span class="chip">R-07</span><span class="chip">R-09 (12)</span></td><td class="h-n"></td></tr>
-<tr><th>Imp. 3</th><td class="h-v"></td><td class="h-a"></td><td class="h-a"><span class="chip">R-04</span><span class="chip">R-05</span><span class="chip">R-08</span><span class="chip">R-10</span><span class="chip">R-11 (9)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 4</th><td class="h-a"></td><td class="h-a"><span class="chip">R-03 (8)</span></td><td class="h-r"><span class="chip">R-01</span><span class="chip">R-02</span><span class="chip">R-06</span><span class="chip">R-07</span><span class="chip">R-09</span><span class="chip">R-12</span><span class="chip">R-13 (12)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 3</th><td class="h-v"></td><td class="h-m"><span class="chip">R-15 (6)</span></td><td class="h-a"><span class="chip">R-04</span><span class="chip">R-05</span><span class="chip">R-08</span><span class="chip">R-10</span><span class="chip">R-11</span><span class="chip">R-14 (9)</span></td><td class="h-n"></td></tr>
 <tr><th>Imp. 2</th><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td><td class="h-a"></td></tr>
 <tr><th>Imp. 1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td></tr>
 </table>
@@ -609,7 +710,7 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <span class="badge b-medio">Medio 4–6</span>
 <span class="badge b-alto">Alto 7–11</span>
 <span class="badge b-crit">Crítico 12–16</span></p>
-<p><b>Prioridad de tratamiento:</b> R-01, R-02, R-06, R-07 y R-09 (Críticos) → atención inmediata; R-03, R-04, R-05, R-08, R-10 y R-11 (Altos) → corto plazo.</p>
+<p><b>Prioridad de tratamiento:</b> R-01, R-02, R-06, R-07, R-09, R-12 y R-13 (Críticos) → atención inmediata; R-03, R-04, R-05, R-08, R-10, R-11 y R-14 (Altos) → corto plazo; R-15 (Medio).</p>
 
 <!-- 13 -->
 <h2>13. Controles ISO/IEC 27001:2022 (Anexo A)</h2>
@@ -631,14 +732,18 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-11</td><td>A.8.16 — Actividades de seguimiento</td><td>Las señales del ataque (OOM, segfaults, ráfagas) existían en los logs; faltaban reglas que las convirtieran en alertas.</td></tr>
 <tr><td>R-11</td><td>A.8.20 — Seguridad de las redes</td><td>Filtrar el tráfico saliente del servidor web habría impedido la reverse shell al puerto 4444.</td></tr>
 <tr><td>R-11</td><td>A.5.26 — Respuesta a incidentes de seguridad de la información</td><td>Procedimiento para aislar el servidor, cortar la sesión, preservar evidencia y rotar credenciales.</td></tr>
+<tr><td>R-12</td><td>A.8.9 — Gestión de la configuración</td><td>Deshabilitar el editor de temas (DISALLOW_FILE_EDIT) elimina la vía de RCE desde el panel.</td></tr>
+<tr><td>R-13</td><td>A.8.8 — Gestión de vulnerabilidades técnicas</td><td>Quitar el bit SUID de binarios innecesarios y auditarlos cierra la escalada a root.</td></tr>
+<tr><td>R-14</td><td>A.5.17 / A.8.5 — Autenticación</td><td>MFA, política de contraseñas y bloqueo tras intentos fallidos en el login.</td></tr>
+<tr><td>R-15</td><td>A.8.3 / A.8.24 — Acceso a la información y criptografía</td><td>Restringir archivos públicos y renovar el certificado TLS.</td></tr>
 </table>
 
 <!-- 14 -->
 <h2>14. Contramedidas</h2>
 <table>
 <tr><th>Tipo</th><th>Contramedida</th></tr>
-<tr><td>Técnica</td><td>Consultas parametrizadas/ORM; output encoding + CSP + cookies <code>HttpOnly</code>/<code>Secure</code>; eliminar la regla sudo peligrosa y usar rutas absolutas; retirar usuarios del grupo docker; cifrar/retirar secretos en claro. <b>Retos 2 y 3 (PHP2Shell):</b> actualizar PHP a 8.4.27+ y reiniciar los workers; <code>session.upload_progress.enabled=0</code>, <code>opcache.enable=0</code> y, en PHP 8.5, <code>fatal_error_backtraces=0</code>; <code>post_max_size</code> bajo con límites de campos, partes multipart y anidación; rechazar multipart y filtrar el tráfico saliente en el borde; mínimo privilegio del proceso PHP; reglas de detección de PHPSESSID grande, OOM y caídas de workers.</td></tr>
-<tr><td>Administrativa</td><td>Política de gestión de accesos privilegiados; estándar de desarrollo seguro; procedimiento de respuesta a incidentes; revisiones periódicas de configuración. <b>Retos 2 y 3:</b> política de parcheo con plazos para componentes críticos; inventario de versiones del runtime y tratarlo como parte de la superficie de ataque.</td></tr>
+<tr><td>Técnica</td><td>Consultas parametrizadas/ORM; output encoding + CSP + cookies <code>HttpOnly</code>/<code>Secure</code>; eliminar la regla sudo peligrosa y usar rutas absolutas; retirar usuarios del grupo docker; cifrar/retirar secretos en claro. <b>Retos 2 y 3 (PHP2Shell):</b> actualizar PHP a 8.4.27+ y reiniciar los workers; <code>session.upload_progress.enabled=0</code>, <code>opcache.enable=0</code> y, en PHP 8.5, <code>fatal_error_backtraces=0</code>; <code>post_max_size</code> bajo con límites de campos, partes multipart y anidación; rechazar multipart y filtrar el tráfico saliente en el borde; mínimo privilegio del proceso PHP; reglas de detección de PHPSESSID grande, OOM y caídas de workers. <b>Reto 4 (Mr-Robot):</b> <code>DISALLOW_FILE_EDIT</code> en wp-config; quitar el bit SUID de binarios innecesarios; permisos restrictivos a archivos sensibles; renovar el certificado TLS.</td></tr>
+<tr><td>Administrativa</td><td>Política de gestión de accesos privilegiados; estándar de desarrollo seguro; procedimiento de respuesta a incidentes; revisiones periódicas de configuración. <b>Retos 2 y 3:</b> política de parcheo con plazos para componentes críticos; inventario de versiones del runtime y tratarlo como parte de la superficie de ataque. <b>Reto 4:</b> MFA en accesos administrativos, bloqueo tras intentos fallidos y revisión periódica de archivos públicos.</td></tr>
 <tr><td>Organizacional</td><td>Concienciación del equipo de desarrollo; segregación de funciones; designación de responsables de seguridad; auditorías periódicas.</td></tr>
 </table>
 
@@ -657,6 +762,10 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-09 PHP2Shell</td><td>Mitigar</td><td>Actualizar a PHP 8.4.27+; mientras tanto desactivar upload_progress y limitar tamaño/campos de las peticiones</td><td>Admin de aplicaciones</td><td>Alta</td><td><code>php -v</code> ≥ 8.4.27; repetir la prueba del laboratorio sin OOM ni fuga</td><td>12 → 3</td></tr>
 <tr><td>R-10 Datos de la aplicación</td><td>Mitigar</td><td>Mínimo privilegio para www-data; BD fuera de la ruta web; segmentación del contenedor</td><td>Admin de sistemas</td><td>Media</td><td>Revisión de permisos de /var/www/data</td><td>9 → 4</td></tr>
 <tr><td>R-11 Detección y respuesta</td><td>Mitigar</td><td>Reglas de OOM y segfault; alertas por ráfagas y respuestas anómalas; egress filtering; procedimiento de respuesta</td><td>Equipo Blue Team</td><td>Alta</td><td>Las reglas disparan sobre los logs del Sherlock; conexión saliente a 4444 bloqueada</td><td>9 → 3</td></tr>
+<tr><td>R-12 RCE editor de temas</td><td>Mitigar</td><td>DISALLOW_FILE_EDIT + MFA + WAF</td><td>Admin del sitio</td><td>Inmediata</td><td>Editor deshabilitado; prueba de no-edición</td><td>12 → 3</td></tr>
+<tr><td>R-13 Escalada SUID nmap</td><td>Mitigar</td><td>Quitar SUID innecesarios; auditar con find -perm -4000</td><td>Admin de sistemas</td><td>Alta</td><td>Sin binarios SUID anómalos</td><td>12 → 3</td></tr>
+<tr><td>R-14 Credenciales WordPress</td><td>Mitigar</td><td>MFA, política de contraseñas, bloqueo de login</td><td>Admin del sitio</td><td>Alta</td><td>El login resiste la fuerza bruta</td><td>9 → 3</td></tr>
+<tr><td>R-15 Información expuesta</td><td>Mitigar</td><td>Revisar robots.txt y permisos; renovar TLS</td><td>DevOps</td><td>Media</td><td>Archivos sensibles no accesibles; TLS vigente</td><td>6 → 3</td></tr>
 </table>
 
 <!-- 16 -->
@@ -679,6 +788,7 @@ Este aporte contribuye a habilitar el techo de 5.0 una vez completados los cuatr
 <tr><td>Claude (Anthropic)</td><td>Reto 3: "Este es el tercero, ¿cómo tengo que hacer en Kali Linux?" (writeup de dOOMs Day)</td><td>Traducción del writeup (Notepad++/Wireshark en Windows) a comandos grep, awk, sed y tshark, paso a paso</td><td>Cada comando se ejecutó en Kali y su salida se comparó con el writeup (Fig. R3-1 a R3-16)</td><td>Se corrigió la ruta (<code>~/Downloads</code>), un <code>cut</code> que ocultaba la cookie y la conversión de hora de tshark (UTC−4 → UTC).</td></tr>
 <tr><td>Claude (Anthropic)</td><td>Reto 3: interpretación de los resultados (boundaries, cookie, hora de la shell)</td><td>Explicación de cada fase del exploit y de la dirección de memoria filtrada</td><td>Contrastado con el aviso de php.net y con la secuencia del worker pid 145</td><td>La petición BNDRY12345 no aparece en el writeup: se documentó como observación propia sin atribuirle una función no verificada.</td></tr>
 <tr><td>Claude (Anthropic)</td><td>Reto 3: documento de seguimiento, panel del dashboard y redacción de este apartado</td><td>Tabla de evidencias, línea de tiempo, contramedidas y controles ISO propuestos</td><td>Revisado por el Líder Blue Team / Auditor ISO</td><td>Los controles ISO y la valoración de R-09 a R-11 se justificaron con la evidencia del laboratorio.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>Reto 4: integración del informe de Mr-Robot al dashboard y al documento consolidado</td><td>Panel del Reto 4, apartado 6, filas en tablas compartidas y riesgos R-12 a R-15</td><td>Contrastado con el informe original de Mr-Robot y sus evidencias (Fig. R4-1 a R4-8)</td><td>Se renumeraron los riesgos a R-12..R-15 y se adaptó la escala al modelo consolidado 4×4.</td></tr>
 </table>
 <p><b>Reflexión:</b> la IA se usó para estructurar y acelerar el trabajo, pero el equipo comprende y puede explicar cada paso.
 No se incorporaron vulnerabilidades, evidencias ni controles inventados: todo lo documentado proviene de la explotación real.
@@ -702,6 +812,7 @@ credenciales y configuración del sistema. La aplicación de los controles ISO/I
 tratamiento propuesto reducen los riesgos críticos a niveles medios/bajos. Se recomienda priorizar R-01 y R-02, cifrar
 credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
 <p>Los Retos 2 y 3 mostraron las dos caras de la misma vulnerabilidad del entorno de ejecución (PHP 8.4.26): en el Reto 2 se obtuvo ejecución remota sin autenticación sin tocar el código de la aplicación, y en el Reto 3 se reconstruyó ese mismo ataque desde los registros. La prioridad es tratar el runtime como parte de la superficie de ataque: parchearlo con la misma urgencia que la aplicación (R-06, R-07, R-09), restringir lo que la cuenta web puede leer (R-10), rotar los secretos que la fuga pudo exponer y convertir en alertas las señales que ya quedaban en los logs junto con el filtrado del tráfico saliente (R-08, R-11).</p>
+<p>El Reto 4 (Mr-Robot) confirmó la misma lección desde la capa de aplicación: la cadena de reconocimiento a root no necesitó exploits de día cero, sino configuraciones inseguras acumuladas (información expuesta, credenciales débiles, permisos excesivos y un binario SUID). El hardening básico y consistente, más la detección de la fuerza bruta y de las conexiones salientes, habría roto la cadena (R-12 a R-15).</p>
 
 <!-- 20 -->
 <h2>20. Referencias y anexos</h2>
@@ -719,8 +830,11 @@ credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
 <li>PHP – GHSA-w8hw-w9fx-j79w (CVE-2026-109618) y GHSA-6wmf-4rv5-p3rp (CVE-2026-109619) — https://github.com/php/php-src/security/advisories</li>
 <li>INCIBE-CERT – Two critical PHP vulnerabilities affect web servers — https://www.incibe.es/en/incibe-cert/publications/cybersecurity-highlights/two-critical-php-vulnerabilities-affect-web-servers</li>
 <li>OWASP Top 10:2025 – A10 Mishandling of Exceptional Conditions — https://owasp.org/Top10/2025/</li>
+<li>TryHackMe – Mr Robot CTF — https://tryhackme.com/room/mrrobot</li>
+<li>GTFOBins – nmap (SUID) — https://gtfobins.github.io/gtfobins/nmap/</li>
+<li>pentestmonkey – PHP Reverse Shell — http://pentestmonkey.net/tools/web-shells/php-reverse-shell</li>
 </ul>
-<p><b>Anexos:</b> las capturas del Reto 1 (Fig. 1–21) están en <code>evidencias/</code>, las del Reto 2 (Fig. R2-1 a R2-4) en <code>evidencias-reto2/</code> y las del Reto 3 (Fig. R3-1 a R3-17) en <code>evidencias-reto3/</code>. Reto pendiente: Mr-Robot <span class="badge b-pend">PENDIENTE</span>.</p>
+<p><b>Anexos:</b> las capturas están en <code>evidencias/</code> (Reto 1, Fig. 1–21), <code>evidencias-reto2/</code> (Reto 2, Fig. R2-1 a R2-4), <code>evidencias-reto3/</code> (Reto 3, Fig. R3-1 a R3-17) y <code>evidencias-reto4/</code> (Reto 4, Fig. R4-1 a R4-8). Los cuatro retos (Niveles 1–4) están completados.</p>
 
 <hr style="margin:40px 0 10px">
 <p style="text-align:center;font-size:11px;color:#8793a5">Informe generado para la Hackathon CyberRisk 2.0 — The Next Level · InnovaSec S.A.S. (escenario ficticio) · Documento académico</p>

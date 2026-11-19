@@ -191,7 +191,7 @@
         <div class="scope">
           <span><i>Cliente</i>InnovaSec S.A.S. <small>(ficticio)</small></span>
           <span><i>Consultora</i>Equipo de 3 · Ciberseguridad</span>
-          <span><i>Estado</i>Niveles 1&ndash;3 completados</span>
+          <span><i>Estado</i>Niveles 1&ndash;4 completados</span>
           <span><i>Actualizado</i>18/11/2026</span>
         </div>
       </div>
@@ -219,7 +219,7 @@
     <div class="tab active" data-p="r1"><span class="dot dot-ok"></span>Reto 1 · The Marketplace <span class="st st-ok">COMPLETO</span></div>
     <div class="tab" data-p="r2"><span class="dot dot-ok"></span>Reto 2 · PHP2Shell <span class="st st-ok">COMPLETO</span></div>
     <div class="tab" data-p="r3"><span class="dot dot-ok"></span>Reto 3 · dOOMs Day <span class="st st-ok">COMPLETO</span></div>
-    <div class="tab" data-p="r4"><span class="dot dot-pend"></span>Reto 4 · Mr-Robot <span class="st st-pend">COMPAÑEROS</span></div>
+    <div class="tab" data-p="r4"><span class="dot dot-ok"></span>Reto 4 · Mr-Robot <span class="st st-ok">COMPLETO</span></div>
     <div class="tab" data-p="glob"><span class="dot dot-pend"></span>Consolidado 4 retos</div>
   </div>
 
@@ -698,29 +698,188 @@
 
   <!-- ============================================================= -->
   <!-- ====  RETO 4 · Mr-Robot  — EDITA SOLO ESTE BLOQUE  =========== -->
-  <!-- ====  Responsable: [nombre del compañero]  ================== -->
-  <!-- ====  Red Team web + escalada, 3 keys. Copia formato Reto 1. = -->
+  <!-- ====  Responsable: Wilson Javier Gómez Mantilla  ========== -->
+  <!-- ====  Red Team web + escalada, 3 keys.                     = -->
   <!-- ====  NO toques los paneles de otros retos.               === -->
   <!-- ============================================================= -->
   <section class="panel" id="r4">
-    <div class="pend">
-      <div class="big">🤖</div>
-      <h3>Reto 4 — Mr-Robot · Responsable: Wilson Javier Gómez Mantilla</h3>
-      <p>Enfoque: explotación web y escalada de privilegios — Red Team (TryHackMe o VulnHub). Tres claves progresivas.</p>
-      <div class="tmpl">
-        <b>Qué rellenar:</b>
+    <style>
+      #r4 .mrflow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:6px 0 2px}
+      @media(max-width:860px){#r4 .mrflow{grid-template-columns:repeat(2,1fr)}}
+      #r4 .mrstep{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 14px;position:relative}
+      #r4 .mrstep .s{font-family:var(--mono);font-size:10.5px;color:var(--team-red);font-weight:700}
+      #r4 .mrstep .t{font-weight:700;color:var(--ink);font-size:13px;margin:3px 0 2px}
+      #r4 .mrstep .d{font-size:11.5px;color:var(--muted);line-height:1.35}
+      #r4 .keys{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+      #r4 .keycard{flex:1;min-width:220px;background:#0d1f29;border-radius:10px;padding:13px 16px}
+      #r4 .keycard .kn{color:#8fdcc0;font-size:11.5px;font-weight:700}
+      #r4 .keycard .kv{color:#49e6a3;font-family:var(--mono);font-size:12.5px;word-break:break-all;margin-top:4px}
+    </style>
+
+    <div class="note">Panel <b>desarrollado por Wilson Javier Gómez Mantilla</b> (Reto 4, Operador Red Team).
+      Explotación web y escalada de privilegios contra <b>Mr-Robot</b> (TryHackMe): de usuario anónimo a
+      <b>root</b> por configuraciones inseguras acumuladas sobre un WordPress desactualizado. Tres claves obtenidas.</div>
+
+    <div class="reportbar">
+      <span class="txt"><b>Informe técnico del Reto 4:</b> reconocimiento, explotación, escalada, OWASP, riesgos y contramedidas (apartados 6 y 9).</span>
+      <a class="btn-report" href="Informe-CyberRisk2.0.html#reto4" target="_blank" rel="noopener">
+        <span class="ic">📄</span><span>Abrir informe del Reto 4</span></a>
+    </div>
+
+    <h2 class="sec">Indicadores clave</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="n">3<small>/3</small></div><div class="l">Claves capturadas</div></div>
+      <div class="kpi"><div class="n">6</div><div class="l">Hallazgos (H-04a…f)</div></div>
+      <div class="kpi"><div class="n">2</div><div class="l">Riesgos críticos</div></div>
+      <div class="kpi"><div class="n">root</div><div class="l">Nivel de compromiso</div></div>
+      <div class="kpi"><div class="n">~2<small> h</small></div><div class="l">De reconocimiento a root</div></div>
+    </div>
+
+    <h2 class="sec">Trabajo por equipo</h2>
+    <div class="teams">
+      <div class="team red">
+        <div class="thd"><div class="ti">&#9876;</div><div><div class="tn">Red Team</div><div class="tr">Ofensiva · web → root</div></div></div>
         <ul>
-          <li>KPIs: 3 keys, hallazgos, severidad.</li>
-          <li>Tarjetas de hallazgos (enumeración web, explotación, escalada) con OWASP 2025.</li>
-          <li>Riesgos aportados y su prioridad/residual.</li>
+          <li>Reconocimiento con <b>nmap</b>: SSH, Apache HTTP/HTTPS</li>
+          <li><code>robots.txt</code> expone <code>fsocity.dic</code> y la <b>Key 1</b></li>
+          <li>Fuerza bruta con <b>Hydra</b> → <code>elliot : ER28-0652</code></li>
+          <li>Editor de temas de WordPress → <b>reverse shell</b> (404.php)</li>
+          <li><b>John</b> craquea el hash de robot → <b>Key 2</b></li>
+          <li>Binario <code>nmap</code> con <b>SUID</b> → root → <b>Key 3</b></li>
+        </ul>
+      </div>
+      <div class="team blue">
+        <div class="thd"><div class="ti">&#128737;</div><div><div class="tn">Blue Team</div><div class="tr">Defensa · detección y hardening</div></div></div>
+        <ul>
+          <li>WAF / IPS: ráfaga de POST a <code>wp-login.php</code> (Hydra)</li>
+          <li><b>FIM</b> sobre los archivos de tema: alerta por 404.php modificado</li>
+          <li>Egress: conexión saliente al puerto <b>4444</b> (reverse shell)</li>
+          <li>Hardening: <code>DISALLOW_FILE_EDIT</code>, quitar SUID, MFA</li>
         </ul>
       </div>
     </div>
+
+    <h2 class="sec">Cadena de explotación</h2>
+    <div class="mrflow">
+      <div class="mrstep"><div class="s">01 · Recon</div><div class="t">Nmap</div><div class="d">22/80/443; Apache + WordPress</div></div>
+      <div class="mrstep"><div class="s">02 · Enum</div><div class="t">robots.txt</div><div class="d">fsocity.dic + Key 1</div></div>
+      <div class="mrstep"><div class="s">03 · Credenciales</div><div class="t">Hydra</div><div class="d">elliot : ER28-0652</div></div>
+      <div class="mrstep"><div class="s">04 · RCE</div><div class="t">Editor de temas</div><div class="d">404.php → shell daemon</div></div>
+      <div class="mrstep"><div class="s">05 · Lateral</div><div class="t">John</div><div class="d">robot + Key 2</div></div>
+      <div class="mrstep"><div class="s">06 · Root</div><div class="t">SUID nmap</div><div class="d">!sh → root + Key 3</div></div>
+    </div>
+
+    <h2 class="sec">Claves obtenidas</h2>
+    <div class="keys">
+      <div class="keycard"><div class="kn">Key 1 · robots.txt</div><div class="kv">073403c8a58a1f80d943455fb30724b9</div></div>
+      <div class="keycard"><div class="kn">Key 2 · usuario robot</div><div class="kv">822c73956184f694993bede3eb39f959</div></div>
+      <div class="keycard"><div class="kn">Key 3 · root</div><div class="kv">04787ddef27c3dee1ee161b21670b4e4</div></div>
+    </div>
+
+    <h2 class="sec">Hallazgos</h2>
+    <div class="cards">
+      <div class="card crit"><div class="id">H-04c</div><h4>Editor de temas de WordPress → RCE</h4>
+        <p>Con el panel admin, se reemplaza <code>404.php</code> por una reverse shell en PHP: ejecución remota como daemon.</p>
+        <div class="tags"><span class="sev crit">Crítico</span><span class="owasp">A02 Misconfiguration</span></div></div>
+      <div class="card crit"><div class="id">H-04e</div><h4>Binario nmap con bit SUID</h4>
+        <p>Una versión antigua de <code>nmap</code> con SUID permite <code>--interactive</code> → <code>!sh</code> y shell de root.</p>
+        <div class="tags"><span class="sev crit">Crítico</span><span class="owasp">A06 Insecure Design</span></div></div>
+      <div class="card alto"><div class="id">H-04b</div><h4>Credenciales débiles de WordPress</h4>
+        <p>El usuario <code>elliot</code> cae por fuerza bruta con Hydra y el diccionario <code>fsocity.dic</code>.</p>
+        <div class="tags"><span class="sev alto">Alto</span><span class="owasp">A07 Auth Failures</span></div></div>
+      <div class="card alto"><div class="id">H-04d</div><h4>Archivo de credenciales legible</h4>
+        <p><code>password.raw-md5</code> con lectura pública: el hash de robot se craquea con John al instante.</p>
+        <div class="tags"><span class="sev alto">Alto</span><span class="owasp">A02 Misconfiguration</span></div></div>
+      <div class="card alto"><div class="id">H-04a</div><h4>Exposición de información en robots.txt</h4>
+        <p><code>robots.txt</code> revela el diccionario de contraseñas y la primera clave del reto sin control de acceso.</p>
+        <div class="tags"><span class="sev alto">Alto</span><span class="owasp">A01 Broken Access Control</span></div></div>
+      <div class="card medio"><div class="id">H-04f</div><h4>Certificado TLS autofirmado y expirado</h4>
+        <p>HTTPS con certificado vencido desde 2025: sin garantías de identidad ni de cifrado vigente.</p>
+        <div class="tags"><span class="sev medio">Medio</span><span class="owasp">A04 Cryptographic Failures</span></div></div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <h2 class="sec">Mapa de calor — riesgos del Reto 4</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Impacto (filas) × Probabilidad (columnas). Pulsa un riesgo.</p>
+        <table class="heat">
+          <tr><th></th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr>
+          <tr><th class="rh">I4</th><td class="h-a"></td><td class="h-a"></td>
+              <td class="h-r"><span class="rk" data-r4="R-12">R-12</span><span class="rk" data-r4="R-13">R-13</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I3</th><td class="h-v"></td><td class="h-m"><span class="rk" data-r4="R-15">R-15</span></td>
+              <td class="h-a"><span class="rk" data-r4="R-14">R-14</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I2</th><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td><td class="h-a"></td></tr>
+          <tr><th class="rh">I1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td></tr>
+        </table>
+        <div class="legend">
+          <span style="background:var(--verde)">Bajo 1–3</span>
+          <span style="background:var(--amarillo);color:#4a3b00">Medio 4–6</span>
+          <span style="background:var(--naranja)">Alto 7–11</span>
+          <span style="background:var(--rojo)">Crítico 12–16</span>
+        </div>
+        <div class="detail" id="r4detail"></div>
+      </div>
+      <div>
+        <h2 class="sec">Prioridad de tratamiento</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Riesgo = Impacto × Probabilidad (máx. 16).</p>
+        <div class="bar"><div class="t"><b>R-12</b><span>12 · Crítico</span></div>
+          <div class="track"><div class="fill" style="width:75%;background:#c1121f">12</div></div></div>
+        <div class="bar"><div class="t"><b>R-13</b><span>12 · Crítico</span></div>
+          <div class="track"><div class="fill" style="width:75%;background:#c1121f">12</div></div></div>
+        <div class="bar"><div class="t"><b>R-14</b><span>9 · Alto</span></div>
+          <div class="track"><div class="fill" style="width:56.25%;background:#b45f00">9</div></div></div>
+        <div class="bar"><div class="t"><b>R-15</b><span>6 · Medio</span></div>
+          <div class="track"><div class="fill" style="width:37.5%;background:#caa000">6</div></div></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Detección y contramedidas</h2>
+    <table class="mini">
+      <tr><th>Tipo</th><th>Medida</th><th>Hallazgo / riesgo</th></tr>
+      <tr><td>Prevención</td><td>Deshabilitar el editor de temas: <code>define('DISALLOW_FILE_EDIT', true)</code> en wp-config</td><td>H-04c · R-12</td></tr>
+      <tr><td>Prevención</td><td>Quitar el bit SUID de binarios que no lo requieren y auditarlos con <code>find / -perm -4000</code></td><td>H-04e · R-13</td></tr>
+      <tr><td>Prevención</td><td>MFA y bloqueo tras N intentos en el login; permisos restrictivos a archivos sensibles</td><td>H-04b, H-04d · R-14</td></tr>
+      <tr><td>Prevención</td><td>Revisar archivos públicos (robots.txt, directorios) y renovar el certificado TLS</td><td>H-04a, H-04f · R-15</td></tr>
+      <tr><td>Detección</td><td>WAF / bloqueo ante ráfagas de POST a <code>wp-login.php</code> (fuerza bruta)</td><td>R-14</td></tr>
+      <tr><td>Detección</td><td>FIM sobre los archivos de tema; alerta por conexiones salientes a puertos no estándar (4444)</td><td>R-12</td></tr>
+      <tr><td>Contención</td><td>Aislar el servidor, rotar credenciales de elliot/robot y revisar la integridad del sitio</td><td>H-04b, H-04c</td></tr>
+    </table>
+
+    <h2 class="sec">Riesgo residual (tras tratamiento)</h2>
+    <table class="mini">
+      <tr><th>Riesgo</th><th>Actual</th><th>Acción (resumen)</th><th>Residual</th></tr>
+      <tr><td>R-12 RCE vía editor de temas</td><td>12 (Crítico)</td><td>DISALLOW_FILE_EDIT + MFA + WAF</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-13 Escalada a root (SUID nmap)</td><td>12 (Crítico)</td><td>Quitar SUID innecesarios + auditoría</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-14 Credenciales débiles de WordPress</td><td>9 (Alto)</td><td>MFA, política de contraseñas, bloqueo</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-15 Exposición de información</td><td>6 (Medio)</td><td>Revisar robots.txt y permisos; renovar TLS</td><td>3 (Bajo)</td></tr>
+    </table>
+
+    <script>
+      (function(){
+        var r4risks = {
+          "R-12":{n:"RCE vía editor de temas de WordPress", a:"Aplicación web (WordPress / panel admin)", v:"Editor de temas habilitado: reemplazo de 404.php por una shell", i:4, p:3},
+          "R-13":{n:"Escalada a root por binario SUID", a:"Sistema operativo del servidor", v:"nmap con bit SUID y modo interactivo", i:4, p:3},
+          "R-14":{n:"Credenciales débiles de WordPress", a:"Panel de administración de WordPress", v:"Contraseña adivinable por fuerza bruta, sin bloqueo ni MFA", i:3, p:3},
+          "R-15":{n:"Exposición de información sensible", a:"Servidor web (robots.txt, archivos públicos)", v:"Diccionario y clave expuestos; archivo de credenciales legible; TLS vencido", i:3, p:2}
+        };
+        function niv(v){return v>=12?["Crítico","#c1121f"]:v>=7?["Alto","#b45f00"]:v>=4?["Medio","#b88900"]:["Bajo","#1f7a6f"]}
+        var det = document.getElementById('r4detail');
+        document.querySelectorAll('#r4 [data-r4]').forEach(function(el){
+          el.addEventListener('click', function(){
+            var k = el.getAttribute('data-r4'), r = r4risks[k]; if(!r) return;
+            var v = r.i*r.p, nl = niv(v);
+            det.classList.add('show');
+            det.innerHTML = '<b>'+k+' — '+r.n+'</b><br><b>Activo:</b> '+r.a+' · <b>Vulnerabilidad:</b> '+r.v+
+              '<br><b>Impacto:</b> '+r.i+' × <b>Probabilidad:</b> '+r.p+' = <b style="color:'+nl[1]+'">'+v+' ('+nl[0]+')</b>';
+          });
+        });
+      })();
+    </script>
   </section>
 
   <!-- ============ CONSOLIDADO ============ -->
   <section class="panel" id="glob">
-    <div class="note">Vista consolidada del equipo. <b>Niveles 1&ndash;3 completados</b> (techo 4.0). El <b>techo de 5.0</b> exige los cuatro retos más un aporte adicional sustancial validado — este dashboard es ese aporte.</div>
+    <div class="note">Vista consolidada del equipo. <b>Niveles 1&ndash;4 completados</b> (techo 4.5). El <b>techo de 5.0</b> exige los cuatro retos más un aporte adicional sustancial validado — este dashboard es ese aporte.</div>
     <h2 class="sec">Progreso por nivel</h2>
     <div id="globbars"></div>
     <table class="mini" style="margin-top:14px">
@@ -728,10 +887,10 @@
       <tr><td>1</td><td>Marketplace</td><td>3.0</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Completado</span></td></tr>
       <tr><td>2</td><td>+ PHP2Shell</td><td>3.5</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Reto 2 completado</span></td></tr>
       <tr><td>3</td><td>+ dOOMs Day</td><td>4.0</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Reto 3 completado</span></td></tr>
-      <tr><td>4</td><td>+ Mr-Robot</td><td>4.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
+      <tr><td>4</td><td>+ Mr-Robot</td><td>4.5</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Reto 4 completado</span></td></tr>
       <tr><td>5</td><td>Los 4 + aporte extraordinario</td><td>5.0</td><td><span class="pill">Requiere 1–4 + aporte</span></td></tr>
     </table>
-    <p style="font-size:12.5px;color:var(--muted)">Riesgos consolidados (Retos 1&ndash;3): <b>R-01 … R-11</b>. El Reto 4 (Mr-Robot) añadirá los siguientes.</p>
+    <p style="font-size:12.5px;color:var(--muted)">Riesgos consolidados (Retos 1&ndash;4): <b>R-01 … R-15</b>.</p>
   </section>
 
   <div class="foot">Dashboard interactivo · Hackathon CyberRisk 2.0 — The Next Level · Documento académico · InnovaSec S.A.S. (ficticio)</div>
@@ -798,7 +957,7 @@ document.querySelectorAll('.rk').forEach(el=>el.onclick=()=>{
 
 // ---- barras consolidado ----
 const gb=document.getElementById('globbars');
-const prog=[["Nivel 1 — Marketplace",100],["Nivel 2 — PHP2Shell",100],["Nivel 3 — dOOMs Day",100],["Nivel 4 — Mr-Robot",0]];
+const prog=[["Nivel 1 — Marketplace",100],["Nivel 2 — PHP2Shell",100],["Nivel 3 — dOOMs Day",100],["Nivel 4 — Mr-Robot",100]];
 gb.innerHTML=prog.map(([t,v])=>`<div class="bar"><div class="t"><b>${t}</b><span>${v}%</span></div>
   <div class="track"><div class="fill" style="width:${Math.max(v,3)}%;background:${v?'#1f7a6f':'#9aa4b2'}">${v?v+'%':''}</div></div></div>`).join("");
 
