@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Informe CyberRisk 2.0 - The Marketplace</title>
+<title>Informe CyberRisk 2.0 - The Next Level</title>
 <style>
   :root{
     --azul:#0b2545; --azul2:#13315c; --acento:#00b4d8; --rojo:#c1121f; --naranja:#e07a00;
@@ -73,7 +73,7 @@
     &nbsp;&nbsp;• Andrey David Morales Díaz — Líder Blue Team / Auditor ISO<br>
     &nbsp;&nbsp;• Wilson Javier Gómez Mantilla — Líder Análisis de Riesgos<br>
     <b>Asignatura:</b> Ciberseguridad &nbsp;·&nbsp; <b>Docente:</b> Yamid Gabriel Gamba González<br>
-    <b>Fecha:</b> 14/11/2026 &nbsp;·&nbsp; <b>Nivel alcanzado:</b> Nivel 1 (Reto 1 — The Marketplace)
+    <b>Fecha:</b> <span id="fecha-informe">14/11/2026</span> &nbsp;·&nbsp; <b>Nivel alcanzado:</b> Nivel 4 (Retos 1–4 completados · techo 4.5)
   </div>
 </div>
 
@@ -845,6 +845,15 @@ credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
   if (location.hash.indexOf('print') !== -1 || location.search.indexOf('print=1') !== -1) {
     window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 600); });
   }
+  // Fecha de portada: la del momento en que se genera/abre el informe (no una fecha fija)
+  (function () {
+    var el = document.getElementById('fecha-informe');
+    if (!el) return;
+    var hoy = new Date();
+    var dd = String(hoy.getDate()).padStart(2, '0');
+    var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    el.textContent = dd + '/' + mm + '/' + hoy.getFullYear();
+  })();
 </script>
 </body>
 </html>
