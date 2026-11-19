@@ -83,7 +83,8 @@
 <b>Nota de alcance:</b> este informe documenta el <b>Reto 1 (The Marketplace)</b>, completado al 100% (nivel 1, techo 3.0).
 Los apartados de gestión (OWASP, riesgos, ISO, Blue Team, plan de tratamiento) se desarrollan a partir de los hallazgos de este
 laboratorio. Los retos 2–4 (PHP2Shell, dOOMs Day, Mr-Robot) se indican como <span class="badge b-pend">PENDIENTE</span>
-y serán desarrollados por los demás integrantes del equipo.
+y serán desarrollados por los demás integrantes del equipo.<br>
+<b>Actualización Retos 2 y 3:</b> los Retos 2 (PHP2Shell) y 3 (dOOMs Day) están completados y se integran en los apartados 6, 8–15 y 17–20 con los riesgos R-06 a R-11.
 </div>
 
 <!-- KPIs -->
@@ -98,7 +99,7 @@ y serán desarrollados por los demás integrantes del equipo.
 <h2 style="margin-top:20px">Contenido</h2>
 <div class="toc">
 1. Portada · 2. Introducción · 3. Objetivos · 4. Alcance y metodología ·
-5. Herramientas · 6. Desarrollo técnico (The Marketplace) · 7. Informe Red Team ·
+5. Herramientas · 6. Desarrollo técnico (The Marketplace · PHP2Shell · dOOMs Day) · 7. Informe Red Team ·
 8. Clasificación OWASP 2025 · 9. Análisis Blue Team · 10. Análisis de impacto ·
 11. Matriz de riesgos · 12. Mapa de calor · 13. Controles ISO 27001 ·
 14. Contramedidas · 15. Plan de tratamiento · 16. Aportes adicionales ·
@@ -154,6 +155,10 @@ IP del atacante (VPN tun0) <code>192.168.144.28</code>.</p>
 <tr><td>SSH</td><td>Acceso remoto como jake</td><td>Uso de credenciales obtenidas</td></tr>
 <tr><td>tar / GTFOBins</td><td>Escalada de privilegios (wildcard injection)</td><td>Abuso de regla sudo sobre script con <code>*</code></td></tr>
 <tr><td>Docker</td><td>Escalada final a root</td><td>Abuso de pertenencia al grupo docker</td></tr>
+<tr><td>OpenVPN / SSH (Reto 2)</td><td>Conexión al laboratorio y a la máquina objetivo</td><td>Acceso a la máquina TryHackMe para atacar el servicio local 127.0.0.1:8088</td></tr>
+<tr><td>exploit.py (PHP2Shell, Reto 2)</td><td>Cadena de fuga de memoria + RCE</td><td>Derrotar ASLR y ejecutar comandos como www-data (CVE-2026-109618/619)</td></tr>
+<tr><td>grep / awk / sed / sort / uniq (Reto 3)</td><td>Análisis forense de access.log y error.log</td><td>Filtrar un error.log de 484 MB sin abrirlo en un editor</td></tr>
+<tr><td>tshark / Wireshark (Reto 3)</td><td>Análisis de la captura de red</td><td>Localizar la reverse shell y reconstruir los comandos del atacante</td></tr>
 </table>
 
 <!-- 6 -->
@@ -249,6 +254,229 @@ docker run -v /:/mnt --rm alpine cat /mnt/root/root.txt   # FLAG 3</code></pre>
 <p><b>Finalización del laboratorio:</b></p>
 <div class="fig"><img src="evidencias/mk-21-room-completed.png" alt="completado"><figcaption>Fig. 21 — Sala "The Marketplace" completada en TryHackMe (Room completed).</figcaption></div>
 
+<!-- 6 · RETO 2 -->
+<h2 class="page-break" id="reto2">6. Desarrollo técnico — Reto 2: PHP2Shell (Red Team)</h2>
+<p><b>Responsable:</b> Andrey David Morales Díaz. <b>Laboratorio:</b> TryHackMe – PHP2Shell
+(<code>https://tryhackme.com/room/cvephp2shell</code>). <b>Enfoque:</b> vulnerabilidades recientes del entorno de ejecución PHP.</p>
+<p><b>Resumen:</b> el 21/10/2026 el proyecto PHP divulgó <b>PHP2Shell</b>, dos vulnerabilidades que, encadenadas, permiten a un
+atacante no autenticado ejecutar comandos en casi cualquier servidor PHP con solo peticiones HTTP normales. El fallo vive en el
+<b>runtime</b> PHP, por debajo del framework o CMS, y está presente desde PHP 5.4.0 (2012): catorce años de versiones a la vez. Se
+explotó de forma controlada un servidor PHP <b>8.4.26</b> en el laboratorio, pasando de peticiones <code>multipart</code> a una
+página que solo imprime <code>OK</code> hasta la ejecución de comandos como <b>www-data</b> y la lectura de la bandera, toda la
+cadena en menos de diez segundos.</p>
+
+<div class="kpi">
+  <div class="c"><div class="n">1/1</div><div class="l">Flag obtenida</div></div>
+  <div class="c"><div class="n">2</div><div class="l">CVE encadenados (CVSS 9.2)</div></div>
+  <div class="c"><div class="n">www-data</div><div class="l">Nivel de compromiso</div></div>
+  <div class="c"><div class="n">&lt;10 s</div><div class="l">Cadena completa</div></div>
+</div>
+
+<h3>6.R2.1 La vulnerabilidad en breve</h3>
+<p>La feature <code>session.upload_progress</code> (habilitada por defecto) escribe el progreso de una subida en
+<code>$_SESSION</code> mientras PHP aún lee el cuerpo <code>multipart/form-data</code>, <b>antes</b> de ejecutar el código de la
+aplicación; se activa con un campo de formulario llamado <code>PHP_SESSION_UPLOAD_PROGRESS</code>. Ese momento previo a la ejecución
+es el punto de apoyo: no necesita <code>session_start()</code>, ni login, ni lógica de aplicación; basta una URL que acepte POST.</p>
+<p>Cuando una petición supera <code>memory_limit</code>, PHP hace un <b>bailout</b> (un <code>longjmp</code> a un punto de
+recuperación) que salta la limpieza ordinaria. Si el agotamiento ocurre después de liberar un bloque pero antes de limpiar el
+puntero que lo referencia, el bailout deja un <b>puntero colgante</b> (<b>CWE-824</b>, acceso a puntero no inicializado). Bajo
+Apache prefork con <code>mod_php</code>, un worker atiende varias peticiones sin reiniciarse, así que ese puntero sobrevive a la
+siguiente petición, que puede controlar qué se aloja en el espacio liberado. De ese único defecto salen las dos CVE.</p>
+<table>
+<tr><th>CVE</th><th>Tipo</th><th>Qué logra</th></tr>
+<tr><td>CVE-2026-109618</td><td>Divulgación de memoria</td><td>Lee el puntero colgante como una cadena de longitud inflada y la devuelve en una cabecera de respuesta: hasta ~67 KB de memoria del worker por petición (derrota ASLR).</td></tr>
+<tr><td>CVE-2026-109619</td><td>Ejecución remota de código</td><td>Reocupa la referencia con un <code>HashTable</code> forjado cuyo destructor apunta a <code>system()</code>: el motor ejecuta el comando del atacante.</td></tr>
+</table>
+
+<h3>6.R2.2 Conexión y confirmación del objetivo (preguntas 4 y 5)</h3>
+<p>Tras conectar la VPN de TryHackMe (interfaz <code>tun0</code>) y comprobar conectividad con la máquina (10.66.159.207), se abrió
+una sesión SSH como <code>ubuntu</code> y se identificó el servidor vulnerable, un contenedor que escucha en
+<code>127.0.0.1:8088</code>.</p>
+<pre><code>ssh ubuntu@10.66.159.207
+docker ps --format '{{.Names}}  {{.Image}}  {{.Status}}'
+docker exec php2shell-target php -v
+curl -s http://127.0.0.1:8088/index.php</code></pre>
+<div class="fig"><img src="evidencias-reto2/php-00-vpn.png" alt="vpn"><figcaption>Fig. R2-1 — Interfaz tun0 activa y ping a la máquina del laboratorio (0% de pérdida).</figcaption></div>
+<div class="fig"><img src="evidencias-reto2/php-01-confirmacion.png" alt="confirmacion"><figcaption>Fig. R2-2 — Contenedor <code>php2shell-target</code> (imagen <code>php:8.4.26-apache</code>), PHP 8.4.26 y la página que imprime <code>OK</code>.</figcaption></div>
+<p>El servidor es <b>PHP 8.4.26</b>, una versión por debajo del parche 8.4.27, y la aplicación completa es una línea
+(<code>&lt;?php echo "OK\n"; ?&gt;</code>): si el ataque funciona aquí, funciona contra el runtime, no contra la aplicación.</p>
+
+<h3>6.R2.3 Ejecución del exploit y lectura de la bandera (preguntas 6, 7 y 8)</h3>
+<p>El exploit (<code>~/php2shell-bypass-aslr-exp/exploit.py</code>) ejecuta la cadena completa. Las etapas 1 y 2 son la fuga de
+memoria (CVE-2026-109618): leen la base del heap y de <code>libphp</code> directamente de la cabecera de respuesta
+<b><code>Set-Cookie</code></b>, lo que derrota ASLR. La etapa 3 (CVE-2026-109619) forja el destructor y ejecuta el comando como
+<b>www-data</b>.</p>
+<pre style="white-space:pre-wrap;word-break:break-all"><code>cd ~/php2shell-bypass-aslr-exp
+python3 exploit.py -u http://127.0.0.1:8088/index.php -c 'cat /f&gt;/out/p1' --proof-file out/p1</code></pre>
+<div class="fig"><img src="evidencias-reto2/php-02-exploit-proof.png" alt="exploit proof"><figcaption>Fig. R2-3 — Cadena completa: heap base, libphp base, etapa 3 (HTDATA/ZIF) y la bandera en la línea <code>PROOF:</code>.</figcaption></div>
+<p>Salida de la ejecución: <code>chunk base = 0x7dad44400000</code>, <code>libphp base = 0x7dad460b1000</code>,
+<code>HTDATA=0x7dad444690d8 ZIF=0x7dad46516370</code>. Las direcciones cambian en cada ejecución (ASLR), por eso el exploit las lee
+en vez de adivinarlas. Los comandos se ejecutan como <b>www-data</b> y la bandera obtenida es
+<span class="flag">THM{b4ilout_l3aves_th3_h3ap_dang1ing}</span> (el propio nombre resume el bug: el <i>bailout</i> deja el heap
+colgando).</p>
+
+<h3>6.R2.4 Respuestas de la sala</h3>
+<table>
+<tr><th>Pregunta</th><th>Respuesta</th></tr>
+<tr><td>Campo que activa el upload-progress</td><td><code>PHP_SESSION_UPLOAD_PROGRESS</code></td></tr>
+<tr><td>Nombre del <code>longjmp</code> ante error fatal</td><td>bailout</td></tr>
+<tr><td>Clase de debilidad (CWE)</td><td>CWE-824</td></tr>
+<tr><td>Versión de PHP del objetivo</td><td>8.4.26</td></tr>
+<tr><td>Palabra que imprime <code>/index.php</code></td><td>OK</td></tr>
+<tr><td>Cabecera que abusa CVE-2026-109618</td><td>Set-Cookie</td></tr>
+<tr><td>Usuario que ejecuta los comandos</td><td>www-data</td></tr>
+<tr><td>Bandera</td><td>THM{b4ilout_l3aves_th3_h3ap_dang1ing}</td></tr>
+<tr><td>Versión 8.4 que corrige</td><td>8.4.27</td></tr>
+<tr><td>Directiva php.ini en 0 que desactiva el disparador</td><td>session.upload_progress.enabled</td></tr>
+</table>
+<p><b>Nota ética:</b> toda la actividad se realizó en el laboratorio autorizado. No se incluyen detalles del exploit inventados: la
+descripción técnica procede de la propia sala y del aviso oficial de PHP, y los valores de memoria son los de la ejecución real.</p>
+
+<h3>6.R2.5 Finalización de la sala</h3>
+<div class="fig"><img src="evidencias-reto2/php-03-room-completed.png" alt="sala completada"><figcaption>Fig. R2-4 — Sala PHP2Shell completada en TryHackMe (usuario amorales96): 8 tareas, 80 puntos.</figcaption></div>
+<!-- 6 · RETO 3 -->
+<h2 class="page-break" id="reto3">6. Desarrollo técnico — Reto 3: dOOMs Day (Blue Team)</h2>
+<p><b>Responsable:</b> Andrey David Morales Díaz (Líder Blue Team / Auditor ISO). <b>Laboratorio:</b> Hack The Box, Sherlock
+<i>dOOMs Day</i> (dificultad Easy), referencia oficial
+<code>https://roadmap.hackthebox.com/changelog/defend-against-cve-2026-109618-cve-2026-109619-with-dooms-day</code>.</p>
+<p><b>Resumen:</b> se reconstruyó cómo un atacante (192.168.72.1) comprometió un servidor web de desarrollo de DevNotes.org
+(192.168.72.50) explotando <b>PHP2Shell</b>, la cadena de CVE-2026-109618 (corrupción por falta de memoria) y CVE-2026-109619
+(estado global obsoleto / use-after-free) en <b>PHP 8.4.26</b>. Entre la primera petición maliciosa (08:42:52 UTC) y la shell
+remota como <code>www-data</code> (08:43:02 UTC) pasaron <b>10 segundos</b>. Después el atacante enumeró el sistema, buscó bases de
+datos y leyó <code>/var/www/data/devnotes.sqlite</code>. Se respondieron las 12 preguntas del Sherlock con evidencia propia.</p>
+
+<div class="kpi">
+  <div class="c"><div class="n">12/12</div><div class="l">Preguntas resueltas</div></div>
+  <div class="c"><div class="n">10 s</div><div class="l">Del 1.er POST a la shell</div></div>
+  <div class="c"><div class="n">7</div><div class="l">Indicadores de ataque</div></div>
+  <div class="c"><div class="n">3</div><div class="l">Fuentes de evidencia</div></div>
+</div>
+
+<h3>6.R3.1 Artefactos y entorno de análisis</h3>
+<p>El laboratorio entrega un ZIP protegido con contraseña con los registros de Apache2 y una captura de red de la subred.
+El análisis se hizo en <b>Kali Linux</b> con herramientas de línea de comandos (<code>grep</code>, <code>awk</code>, <code>sed</code>,
+<code>sort</code>, <code>uniq</code>, <code>tshark</code>) y <b>Wireshark</b>. El <code>error.log</code> pesa 484 MB, por lo que no se
+abrió con un editor: todas las búsquedas se hicieron con filtros de texto.</p>
+<pre><code>cd ~/Downloads/"dOOMs Day"
+ls -lh logs/ Capture.pcap</code></pre>
+<div class="fig"><img src="evidencias-reto3/dd-00-artefactos.png" alt="artefactos"><figcaption>Fig. R3-1 — Artefactos: <code>Capture.pcap</code> (257 MB), <code>access.log</code> (147 KB), <code>error.log</code> (484 MB) y <code>other_vhosts_access.log</code> (vacío).</figcaption></div>
+
+<h3>6.R3.2 Identificación del entorno vulnerable (preguntas 1 y 5)</h3>
+<p>Apache se envía a sí mismo peticiones internas (<i>internal dummy connection</i>) para gestionar sus procesos, y en ellas
+registra la versión de PHP. Las 140 líneas desde <code>::1</code> muestran <b>PHP/8.4.26</b>.</p>
+<pre><code>cd logs
+grep -o 'PHP/[0-9][0-9.]*' access.log | sort | uniq -c</code></pre>
+<div class="fig"><img src="evidencias-reto3/dd-01-version-php.png" alt="version php"><figcaption>Fig. R3-2 — 140 peticiones internas revelan PHP 8.4.26.</figcaption></div>
+<p>El aviso oficial de php.net del 21/10/2026 relaciona esa versión con <b>CVE-2026-109618</b> y <b>CVE-2026-109619</b>, ambas con
+CVSS 4.0 de 9.2, corregidas en 8.5.12, 8.4.27, 8.3.36 y 8.2.35. La primera permite corrupción de memoria cuando PHP agota la memoria
+con datos de la petición a medio inicializar; la segunda deja estado interno ligado a memoria ya liberada, que una petición
+posterior reutiliza. Encadenadas permiten ejecución remota de código sin autenticación, antes de que se ejecute el código de la
+aplicación.</p>
+<div class="fig"><img src="evidencias-reto3/dd-05-cves-php-net.png" alt="aviso php"><figcaption>Fig. R3-3 — Aviso de seguridad de php.net: mitigaciones para CVE-2026-109618 y CVE-2026-109619.</figcaption></div>
+
+<h3>6.R3.3 Identificación del atacante e inicio del ataque (pregunta 2)</h3>
+<pre><code>awk '{print $1}' access.log | sort | uniq -c | sort -rn
+grep '^192.168.72.1 ' access.log | awk '{print $4}' | sort | head -1
+grep -m1 'PHP_SESSION_UPLOAD_PROGRESS' error.log | cut -c1-200</code></pre>
+<p>De cuatro orígenes, 192.168.72.145 (245 peticiones) y 192.168.72.164 (259) son usuarios legítimos y <code>::1</code> es el propio
+servidor. <b>192.168.72.1</b> (160 peticiones) no tiene navegación normal: su primera petición es del
+<b>28/10/2026 08:42:52</b>, y a las 08:42:58 el <code>error.log</code> (módulo <code>mod_dumpio</code>, que registra los cuerpos de las
+peticiones) ya contiene un cuerpo multipart con el campo <code>PHP_SESSION_UPLOAD_PROGRESS</code>, patrón del exploit.</p>
+<div class="fig"><img src="evidencias-reto3/dd-02-ip-atacante.png" alt="ip atacante"><figcaption>Fig. R3-4 — Peticiones por IP, primera petición del atacante y primer cuerpo con PHP_SESSION_UPLOAD_PROGRESS.</figcaption></div>
+
+<h3>6.R3.4 Ocupación del pool de workers (preguntas 3 y 4)</h3>
+<pre><code>grep -o 'boundary=[A-Z]*' error.log | sort | uniq -c
+grep -c '"POST /index.php HTTP/1.1" 200 0' access.log</code></pre>
+<p>El exploit envía subidas multipart que nunca termina para dejar ocupados todos los workers de Apache menos uno, y así lograr
+que sus peticiones siguientes caigan en el mismo proceso. Se identificaron cinco boundaries, cada uno asociado a una fase:</p>
+<table>
+<tr><th>Boundary</th><th>Veces</th><th>Fase (interpretación)</th></tr>
+<tr><td><code>ZZZZZZZZZZ</code></td><td>149</td><td>Ocupar workers (respuesta de la pregunta 3)</td></tr>
+<tr><td><code>CCCCCCCCCC</code></td><td>9</td><td>Peticiones que agotan la memoria (con <code>filename=""</code>)</td></tr>
+<tr><td><code>SSSSSSSSSSSSSSSSSS</code></td><td>2</td><td>Campo PHP_SESSION_UPLOAD_PROGRESS (CVE-2026-109619)</td></tr>
+<tr><td><code>BBBBBBBBBB</code></td><td>1</td><td>POST de la fuga de memoria a <code>/api/health.php</code></td></tr>
+<tr><td><code>BNDRY12345</code></td><td>1</td><td>Observación propia: petición chunked del atacante (08:42:59, pid 94); su función no se pudo determinar con la evidencia disponible</td></tr>
+</table>
+<p>El <code>access.log</code> registra <b>149 POST a /index.php</b> con respuesta de 0 bytes, la misma cifra que el boundary
+<code>ZZZZZZZZZZ</code>: <b>149 workers ocupados</b> (pregunta 4). Las horas aparecen desordenadas porque Apache escribe cada línea al
+cerrar la petición, con la hora en que empezó: las subidas quedaron abiertas a propósito.</p>
+<div class="fig"><img src="evidencias-reto3/dd-03-boundaries.png" alt="boundaries"><figcaption>Fig. R3-5 — Boundaries del exploit en error.log.</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-04-workers.png" alt="workers"><figcaption>Fig. R3-6 — 149 POST a /index.php desde 192.168.72.1.</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-06b-bndry-cabeceras.png" alt="bndry"><figcaption>Fig. R3-7 — Cabeceras de la petición BNDRY12345 (Transfer-Encoding: chunked).</figcaption></div>
+
+<h3>6.R3.5 Agotamiento de memoria — CVE-2026-109618 (pregunta 6)</h3>
+<pre><code>grep -m3 'Allowed memory size of' error.log | cut -c1-250</code></pre>
+<p>A las 08:42:59 PHP avisa <i>Input variables exceeded 1000</i> (formularios con miles de campos) y a las 08:43:01.918 y
+08:43:02.168 aparece el error fatal <b>Allowed memory size of 134217728 bytes exhausted</b> (128 MB, el <code>memory_limit</code>)
+en el worker <b>pid 145</b>. El error ocurre «in Unknown on line 0» porque PHP falla mientras analiza la petición, antes de ejecutar
+cualquier script: es la firma del disparo de CVE-2026-109618.</p>
+<div class="fig"><img src="evidencias-reto3/dd-06-memoria-bndry.png" alt="memoria"><figcaption>Fig. R3-8 — Aviso de variables y agotamiento de memoria en el worker pid 145.</figcaption></div>
+
+<h3>6.R3.6 Fuga de memoria en la cookie — CVE-2026-109619 (preguntas 7 y 8)</h3>
+<pre><code>awk '$10 > 100000' access.log
+grep -m1 -B4 'PHPSESSID=WWWW' error.log | sed 's/.*(data-HEAP): //' | cut -c1-80</code></pre>
+<p>El único POST de gran tamaño es <code>POST /api/health.php</code> (08:43:01, <b>774455 bytes</b> en el access.log). La respuesta
+del mismo worker pid 145 incluye <code>Set-Cookie</code> con un valor de <b>773518 bytes</b> que empieza por
+<code>PHPSESSID=WWWWWWWW%FF%FF…%60V%05%26%AE%7F%00%00</code>. Una cookie de sesión normal mide unos 32 caracteres; esta lleva relleno
+y bytes de memoria. Los bytes <code>60 56 05 26 AE 7F 00 00</code> leídos en little-endian forman <code>0x00007FAE26055660</code>, con la
+forma típica de una dirección de memoria de un proceso Linux de 64 bits: el servidor devolvió parte de su heap, que el atacante usa
+para calcular los offsets de la ejecución remota. Respuestas: cookie <b>PHPSESSID</b>, tamaño <b>773518</b>.</p>
+<div class="fig"><img src="evidencias-reto3/dd-07-post-gigante.png" alt="post gigante"><figcaption>Fig. R3-9 — POST de 774455 bytes a /api/health.php y respuesta del worker pid 145.</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-08-cookie-phpsessid.png" alt="cookie"><figcaption>Fig. R3-10 — Set-Cookie PHPSESSID de 773518 bytes con direcciones de memoria.</figcaption></div>
+
+<h3>6.R3.7 Caídas de los workers (pregunta 11)</h3>
+<pre><code>grep -n 'Segmentation fault (11)' error.log</code></pre>
+<p>Hay dos caídas: el worker <b>pid 145</b> a las 08:46:16 y el <b>pid 170</b> a las <b>08:47:42</b> (respuesta). El pid 145 es el mismo
+proceso que agotó la memoria y filtró la cookie: su caída es consecuencia de la memoria corrompida por el exploit.</p>
+<div class="fig"><img src="evidencias-reto3/dd-09-crashes.png" alt="crashes"><figcaption>Fig. R3-11 — AH00052: caídas de los workers 145 y 170.</figcaption></div>
+
+<h3>6.R3.8 Ejecución remota y actividad posterior (preguntas 9, 10 y 12)</h3>
+<pre><code>cd ..
+tshark -r Capture.pcap -t ud -Y 'tcp contains "www-data"' -T fields \
+  -e frame.time -e ip.src -e ip.dst -e tcp.dstport -e tcp.stream | head
+tshark -r Capture.pcap -q -z follow,tcp,ascii,810 -z follow,tcp,ascii,999 2>/dev/null > shell.txt
+grep -n -E 'find /|strings|uname|cat /proc' shell.txt</code></pre>
+<p>El primer paquete con la cadena <code>www-data</code> va del servidor 192.168.72.50 al atacante 192.168.72.1, puerto <b>4444</b>, a
+las 04:43:02 -0400 = <b>08:43:02 UTC</b> (tshark mostró la hora en la zona de Kali, UTC−4). La conexión la inicia el servidor (SYN desde
+el puerto 55914), lo que confirma una <b>reverse shell</b>, obtenida menos de un segundo después de la fuga de memoria. Hay dos
+sesiones: el stream 810 termina con un RST del atacante y el stream 999 (08:46:29) es la reconexión. Los avisos «Dissector bug,
+protocol MIME multipart» de tshark se deben a que los cuerpos malformados del exploit también confunden al analizador.</p>
+<p>En la shell, con prompt <code>www-data@29ea26c62b7f:/var/www/html$</code>, el atacante ejecutó <code>cat /proc/version</code>,
+<code>uname -a</code> y <code>ps aux</code> (reconocimiento), el comando de la pregunta 12 para buscar bases de datos y, tras reconectar,
+<code>strings /var/www/data/devnotes.sqlite</code>:</p>
+<pre style="white-space:pre-wrap;word-break:break-all"><code>find / -type f \( -name "*.sqlite" -o -name "*.sqlite3" -o -name "*.db" -o -name "*.db3" -o -name "*.s3db" -o -name "*.sl3" \) 2>/dev/null</code></pre>
+<p>En <code>ps aux</code> el PID 1 es <code>apache2 -DFOREGROUND</code> como root y el hostname es un identificador hexadecimal de 12
+caracteres: indicios (no confirmados) de que el servidor corre en un contenedor Docker. Varios workers de Apache arrancaron a las
+08:42, durante la ocupación del pool.</p>
+<div class="fig"><img src="evidencias-reto3/dd-10-reverse-shell.png" alt="reverse shell"><figcaption>Fig. R3-12 — Paquetes con www-data hacia 192.168.72.1:4444 (streams 810 y 999).</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-11-comandos-atacante.png" alt="comandos"><figcaption>Fig. R3-13 — Comandos del atacante en las sesiones de la shell.</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-12a-wireshark-inicio.png" alt="wireshark inicio"><figcaption>Fig. R3-14 — Wireshark, <code>tcp.stream eq 810</code>: el SYN sale del servidor hacia el puerto 4444.</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-12b-wireshark-fin.png" alt="wireshark fin"><figcaption>Fig. R3-15 — Fin del stream 810 con RST del atacante (luego reconecta en el stream 999).</figcaption></div>
+<div class="fig"><img src="evidencias-reto3/dd-12c-follow-stream.png" alt="follow stream"><figcaption>Fig. R3-16 — Follow TCP Stream: comandos del atacante (azul) y respuestas de la shell (rojo).</figcaption></div>
+
+<h3>6.R3.9 Resultados de finalización</h3>
+<table>
+<tr><th>#</th><th>Pregunta</th><th>Respuesta</th><th>Evidencia</th></tr>
+<tr><td>1</td><td>Versión de PHP</td><td>8.4.26</td><td>Fig. R3-2</td></tr>
+<tr><td>2</td><td>Primera petición del atacante</td><td>2026-10-28 08:42:52</td><td>Fig. R3-4</td></tr>
+<tr><td>3</td><td>Boundary de las subidas atascadas</td><td>ZZZZZZZZZZ</td><td>Fig. R3-5</td></tr>
+<tr><td>4</td><td>Workers ocupados</td><td>149</td><td>Fig. R3-6</td></tr>
+<tr><td>5</td><td>CVE encadenados</td><td>CVE-2026-109618, CVE-2026-109619</td><td>Fig. R3-3</td></tr>
+<tr><td>6</td><td>Límite de memoria agotado</td><td>134217728 bytes</td><td>Fig. R3-8</td></tr>
+<tr><td>7</td><td>Cookie de la fuga</td><td>PHPSESSID</td><td>Fig. R3-10</td></tr>
+<tr><td>8</td><td>Tamaño de la cookie</td><td>773518 bytes</td><td>Fig. R3-10</td></tr>
+<tr><td>9</td><td>Momento de la RCE</td><td>2026-10-28 08:43:02</td><td>Fig. R3-12</td></tr>
+<tr><td>10</td><td>Puerto de la shell</td><td>4444</td><td>Fig. R3-12, R3-14</td></tr>
+<tr><td>11</td><td>Segunda caída del worker</td><td>2026-10-28 08:47:42</td><td>Fig. R3-11</td></tr>
+<tr><td>12</td><td>Comando para buscar bases de datos</td><td><code>find / -type f \( -name "*.sqlite" … \) 2&gt;/dev/null</code></td><td>Fig. R3-13, R3-16</td></tr>
+</table>
+<p><b>Limitaciones:</b> no se determinó la función de la petición <code>BNDRY12345</code>; la conclusión de que el servidor corre en un
+contenedor es un indicio. Las respuestas coinciden con el writeup oficial del Sherlock, usado como guía y validado con la salida
+propia de cada comando.</p>
+
+<h3>6.R3.10 Finalización del laboratorio</h3>
+<div class="fig"><img src="evidencias-reto3/dd-13-badge-solved.png" alt="dOOMs Day resuelto"><figcaption>Fig. R3-17 — Sherlock dOOMs Day resuelto en Hack The Box (usuario amorales96): rango #486, 19 nov 2026, 415 XP.</figcaption></div>
+
 <!-- 7 -->
 <h2 class="page-break">7. Informe Red Team consolidado</h2>
 <p><b>Resumen ejecutivo:</b> la plataforma de comercio electrónico de InnovaSec S.A.S. presenta debilidades que, encadenadas,
@@ -277,6 +505,12 @@ mejor una referencia CWE, se indica.</div>
 <tr><td>H-01f</td><td>Acceso a panel admin y lectura de datos ajenos</td><td>Broken Access Control</td><td>Un usuario normal obtiene rol admin y lee mensajes de otros usuarios.</td></tr>
 <tr><td>H-01d</td><td>sudo + tar wildcard</td><td>Security Misconfiguration (CWE-78 / CWE-732)</td><td>Regla sudo sobre script con <code>*</code> y directorio world-writable.</td></tr>
 <tr><td>H-01e</td><td>Grupo docker</td><td>Security Misconfiguration / Broken Access Control (CWE-250)</td><td>Pertenecer al grupo docker equivale a privilegios de root.</td></tr>
+<tr><td>H-02a</td><td>RCE no autenticada vía runtime PHP 8.4.26 (PHP2Shell) → ejecución como www-data</td><td>A03:2025 Software Supply Chain Failures (runtime sin parchear); causa raíz CVE-2026-109619, CWE-824 (use-after-free, CWE-416), relación con A10:2025 Mishandling of Exceptional Conditions</td><td>La debilidad no está en el código de la aplicación sino en el motor PHP: el bailout tras agotar memoria deja un puntero colgante que una segunda petición reocupa con un destructor forjado.</td></tr>
+<tr><td>H-02b</td><td>Divulgación de memoria del proceso en la cabecera Set-Cookie (PHPSESSID)</td><td>A03:2025 / CWE-824 (CWE-200 Exposure of Sensitive Information)</td><td>CVE-2026-109618 devuelve hasta ~67 KB de memoria del worker por petición; en producción puede filtrar contraseñas, cookies y claves TLS.</td></tr>
+<tr><td>H-02c</td><td>session.upload_progress habilitado por defecto; memory_limit bajo</td><td>A02:2025 Security Misconfiguration</td><td>Configuración por defecto que abre el punto de apoyo previo a la autenticación y facilita provocar el agotamiento de memoria.</td></tr>
+<tr><td>H-03a</td><td>dOOMs Day: PHP 8.4.26 vulnerable explotado sin autenticación (PHP2Shell) → RCE como www-data</td><td>A03:2025 Software Supply Chain Failures (componente del entorno de ejecución sin parchear); causa raíz CVE-2026-109618 / CVE-2026-109619, relacionada con A10:2025 Mishandling of Exceptional Conditions</td><td>La debilidad no está en el código de la aplicación sino en el runtime PHP desactualizado; la 109618 nace de un mal manejo de la condición de falta de memoria, y la 109619 es un use-after-free (CWE-416), mejor descrita por su CVE/CWE que por una categoría OWASP.</td></tr>
+<tr><td>H-03b</td><td>dOOMs Day: session.upload_progress habilitado y sin límites de tamaño, campos ni anidación</td><td>A02:2025 Security Misconfiguration</td><td>Configuración por defecto innecesaria que abre la ruta confirmada de la 109619 y permite agotar la memoria con formularios de miles de campos.</td></tr>
+<tr><td>H-03c</td><td>dOOMs Day: ataque ruidoso sin alertas y conexión saliente al puerto 4444 permitida</td><td>A09:2025 Security Logging &amp; Alerting Failures</td><td>Los logs registraron 149 POST, errores de memoria y segfaults, pero nada alertó; el servidor pudo abrir una shell saliente sin filtrado egress.</td></tr>
 </table>
 
 <!-- 9 -->
@@ -296,6 +530,34 @@ sobre <code>/opt/backups</code> y el socket <code>docker.sock</code>. Se recomie
 <tr><td>Grupo docker</td><td>Creación de contenedores con <code>-v /</code>; uso del socket <code>docker.sock</code></td><td>Retirar usuarios del grupo docker; docker rootless; mínimo privilegio</td></tr>
 </table>
 
+<h3>9.R2 Detección y mitigación de PHP2Shell (Reto 2)</h3>
+<p>La única corrección completa es <b>parchear el runtime PHP</b> (8.4.27, 8.5.12, 8.3.36 o 8.2.35) y reiniciar todos los workers; actualizar el CMS o framework no corrige el fallo, que está por debajo. Un WAF que corre como <b>módulo de PHP no sirve</b>: inspecciona el tráfico cuando PHP ya cedió el control a la aplicación, pero el ataque termina su trabajo mientras la petición aún se parsea. La protección debe estar en el runtime parcheado o en una capa por delante de PHP.</p>
+<table>
+<tr><th>Medida</th><th>Tipo</th><th>Efecto</th></tr>
+<tr><td>Actualizar PHP a 8.4.27+ y reiniciar workers</td><td>Prevención</td><td>Corrección completa; elimina el código vulnerable</td></tr>
+<tr><td><code>session.upload_progress.enabled = 0</code> + reiniciar workers</td><td>Mitigación</td><td>Quita el disparador de la mayoría de las técnicas publicadas</td></tr>
+<tr><td><code>opcache.enable = 0</code>; en PHP 8.5 <code>fatal_error_backtraces = 0</code></td><td>Mitigación</td><td>Frustra la ruta de ejecución (y, en 8.5, la 109619)</td></tr>
+<tr><td>Rechazar <code>multipart/form-data</code> en el borde; mínimo privilegio del proceso PHP</td><td>Prevención</td><td>Bloquea la entrega (rompe subidas legítimas); limita el impacto si la cadena cae</td></tr>
+<tr><td>Alertar sobre <code>PHPSESSID</code> grandes en <code>Set-Cookie</code></td><td>Detección</td><td>La fuga produce cookies enormes frente a los identificadores de longitud fija</td></tr>
+<tr><td>Alertar sobre POST multipart grandes con muchos campos y <code>PHP_SESSION_UPLOAD_PROGRESS</code></td><td>Detección</td><td>Marca de las peticiones de entrega del exploit</td></tr>
+<tr><td>Alertar sobre caídas de workers PHP y errores OOM</td><td>Detección</td><td>El agotamiento de memoria que impulsa el bug deja rastro en los logs</td></tr>
+</table>
+<p>Esta detección conecta con el Reto 3 (dOOMs Day), donde esas mismas marcas (PHPSESSID gigante, multipart con PHP_SESSION_UPLOAD_PROGRESS, OOM y segfaults) aparecen en los registros de un servidor ya comprometido por PHP2Shell.</p>
+<h3>9.R3 Investigación dOOMs Day (nivel 3)</h3>
+<p><b>Contexto:</b> tráfico sospechoso en un servidor Dev interno de DevNotes.org; se entregan los logs de Apache2 y una captura de red. La reconstrucción completa, con comandos y capturas, está en el apartado 6 (Reto 3). <b>Fuentes:</b> <code>access.log</code>, <code>error.log</code> con <code>mod_dumpio</code> (cuerpos de petición), <code>Capture.pcap</code> y el aviso de seguridad de php.net.</p>
+<table>
+<tr><th>ID</th><th>Fuente</th><th>Evento identificado</th><th>Indicador de ataque</th><th>Interpretación</th><th>Contramedida</th></tr>
+<tr><td>E-01</td><td>access.log</td><td>149 POST a /index.php desde 192.168.72.1 (08:42:52–08:43:00), respuesta 0 bytes</td><td>Ráfaga de POST idénticos de una IP sin tráfico previo</td><td>Ocupación deliberada del pool de workers</td><td>Rate limiting por IP; alerta por ráfagas de POST</td></tr>
+<tr><td>E-02</td><td>error.log</td><td>Multipart con boundaries ZZZZZZZZZZ, CCCCCCCCCC, SSSS…, BBBBBBBBBB, BNDRY12345 y campo PHP_SESSION_UPLOAD_PROGRESS</td><td>Boundaries artificiales y subidas incompletas</td><td>Preparación y disparo de CVE-2026-109619</td><td>WAF para multipart anómalo; <code>session.upload_progress.enabled=0</code></td></tr>
+<tr><td>E-03</td><td>error.log</td><td>«Allowed memory size of 134217728 bytes exhausted» in Unknown on line 0 (pid 145)</td><td>Agotamiento de memoria sin script en ejecución</td><td>Disparo de CVE-2026-109618</td><td>Regla de detección OOM; parchear PHP</td></tr>
+<tr><td>E-04</td><td>access.log + error.log</td><td>POST de 774455 bytes a /api/health.php; Set-Cookie PHPSESSID de 773518 bytes</td><td>Cookie de sesión enorme con punteros de memoria</td><td>Fuga del heap para calcular offsets de la RCE</td><td>Alerta por respuestas o cookies de tamaño anómalo; límite de tamaño de petición</td></tr>
+<tr><td>E-05</td><td>Capture.pcap</td><td>SYN de 192.168.72.50:55914 a 192.168.72.1:4444; shell www-data (streams 810 y 999)</td><td>Conexión saliente del servidor web a un puerto no estándar</td><td>Reverse shell: RCE lograda a las 08:43:02</td><td>Filtrado egress; IDS de red</td></tr>
+<tr><td>E-06</td><td>Capture.pcap</td><td><code>find</code> de *.sqlite/*.db y <code>strings /var/www/data/devnotes.sqlite</code></td><td>Enumeración de bases de datos desde la cuenta web</td><td>Acceso a la información de la aplicación</td><td>Mínimo privilegio; BD fuera de la ruta web; monitoreo de procesos</td></tr>
+<tr><td>E-07</td><td>error.log</td><td>AH00052: pid 145 (08:46:16) y pid 170 (08:47:42) con Segmentation fault</td><td>Caídas de workers tras tráfico multipart anómalo</td><td>Memoria corrompida por el exploit</td><td>Regla de detección de caídas de worker</td></tr>
+</table>
+<p><b>Cronología resumida (UTC):</b> 08:42:52 ocupación de workers → 08:42:58 PHP_SESSION_UPLOAD_PROGRESS → 08:43:01.9 agotamiento de memoria y fuga en la cookie → <b>08:43:02 reverse shell</b> → reconocimiento y búsqueda de BD → 08:46:16 caída pid 145 → 08:46:29 reconexión y lectura de devnotes.sqlite → 08:47:42 caída pid 170.</p>
+<p><b>Mecanismos de detección propuestos:</b> las reglas Sigma de PHP2Shell citadas en el writeup (autor Mohammad Alattas) son dos que encajan con esta evidencia: (1) error «Allowed memory size of … exhausted» junto con «Unknown on line 0» o <code>rfc1867.c</code>, y (2) caídas de workers PHP/Apache por SIGSEGV, SIGABRT o SIGBUS (AH00052). Ambas dispararían con E-03 y E-07; su prueba automatizada contra estos logs queda como posible aporte adicional. <b>Contención:</b> aislar el servidor, bloquear 192.168.72.1, terminar la sesión de la shell, rotar credenciales y revisar la integridad de devnotes.sqlite.</p>
+
 <!-- 10 -->
 <h2>10. Análisis de impacto (CID)</h2>
 <table>
@@ -304,6 +566,10 @@ sobre <code>/opt/backups</code> y el socket <code>docker.sock</code>. Se recomie
 <tr><td>SQL Injection</td><td>Alto</td><td>Medio</td><td>Bajo</td><td>Fuga de datos de clientes; incumplimiento legal (protección de datos)</td></tr>
 <tr><td>Credenciales en claro</td><td>Alto</td><td>Medio</td><td>Bajo</td><td>Acceso no autorizado; reutilización de credenciales</td></tr>
 <tr><td>Escalada a root</td><td>Alto</td><td>Alto</td><td>Alto</td><td>Control total del servidor; borrado/alteración de evidencia</td></tr>
+<tr><td>RCE por PHP2Shell (Reto 2)</td><td>Alto</td><td>Alto</td><td>Medio</td><td>Ejecución de comandos como www-data sin autenticación; caídas de workers</td></tr>
+<tr><td>Divulgación de memoria (Reto 2)</td><td>Alto</td><td>Bajo</td><td>Bajo</td><td>Fuga de secretos del proceso: contraseñas, cookies y claves TLS</td></tr>
+<tr><td>RCE por PHP2Shell (Reto 3)</td><td>Alto</td><td>Alto</td><td>Medio</td><td>Ejecución de comandos como www-data sin autenticación; caídas de workers (pid 145 y 170)</td></tr>
+<tr><td>Lectura de devnotes.sqlite (Reto 3)</td><td>Alto</td><td>Bajo</td><td>Bajo</td><td>Divulgación del contenido de la aplicación (publicaciones y comentarios)</td></tr>
 </table>
 
 <!-- 11 -->
@@ -318,15 +584,23 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-03</td><td>Servidor (SO)</td><td>Escalada a root</td><td>sudo inseguro + tar wildcard + grupo docker</td><td>4</td><td>2</td><td>8</td><td><span class="badge b-alto">Alto</span></td></tr>
 <tr><td>R-04</td><td>Credenciales de usuarios</td><td>Acceso no autorizado</td><td>Secretos en texto claro</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
 <tr><td>R-05</td><td>Capacidad de detección</td><td>Incidente no detectado</td><td>Registro y monitoreo insuficientes</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-06</td><td>Servidor de aplicaciones (runtime PHP 8.4.26)</td><td>Ejecución remota de código no autenticada</td><td>CVE-2026-109619 (PHP2Shell): destructor forjado tras bailout</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-07</td><td>Memoria del proceso (secretos, claves TLS)</td><td>Divulgación de información</td><td>CVE-2026-109618: puntero colgante leído en Set-Cookie</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-08</td><td>Configuración del runtime y detección</td><td>Explotación facilitada / incidente no detectado</td><td>session.upload_progress por defecto; sin alertas de PHPSESSID grande ni OOM</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-09</td><td>Servidor de aplicaciones (PHP 8.4.26)</td><td>Ejecución remota de código no autorizada</td><td>Componente sin parchear: CVE-2026-109618 + CVE-2026-109619</td><td>4</td><td>3</td><td>12</td><td><span class="badge b-crit">Crítico</span></td></tr>
+<tr><td>R-10</td><td>Base de datos de la aplicación (devnotes.sqlite)</td><td>Divulgación de información</td><td>BD legible por www-data, sin segmentación</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
+<tr><td>R-11</td><td>Capacidad de detección y respuesta</td><td>Incidente no detectado a tiempo</td><td>Sin alertas sobre OOM/segfault ni control de tráfico saliente</td><td>3</td><td>3</td><td>9</td><td><span class="badge b-alto">Alto</span></td></tr>
 </table>
+<p><b>Justificación (Reto 2):</b> R-06 y R-07 tienen impacto 4 (ejecución de comandos sin autenticación y fuga de secretos del proceso, incluidas claves TLS) y probabilidad 3 porque los CVE son públicos, con CVSS 9.2, afectan a 14 años de versiones de PHP y se registraron intentos de explotación a las pocas horas de la divulgación; el laboratorio completó la cadena en menos de 10 segundos. R-08 (impacto 3, probabilidad 3) refleja que la configuración por defecto habilita el ataque y que sus marcas, aunque claras en los logs, no generan alertas por sí solas.</p>
+<p><b>Justificación (Reto 3):</b> R-09 tiene impacto 4 porque da ejecución de comandos sin autenticación sobre el servidor, y probabilidad 3 porque los CVE son públicos, tienen CVSS 9.2 y el laboratorio muestra la explotación completa en 10 segundos. R-10 tiene impacto 3: la RCE como www-data basta para leer la base de datos de la aplicación (evidencia E-06), aunque no se comprometió el sistema operativo completo. R-11 tiene impacto 3 y probabilidad 3: el ataque dejó señales claras (149 POST, OOM, segfaults, shell saliente) y ninguna generó alerta, lo que permitió la actividad posterior.</p>
 
 <!-- 12 -->
 <h2>12. Mapa de calor</h2>
 <p>Impacto (filas) × Probabilidad (columnas). Cada celda muestra los riesgos que caen en ella.</p>
 <table class="heat">
 <tr><th></th><th>Prob. 1</th><th>Prob. 2</th><th>Prob. 3</th><th>Prob. 4</th></tr>
-<tr><th>Imp. 4</th><td class="h-a"></td><td class="h-a"><span class="chip">R-03 (8)</span></td><td class="h-r"><span class="chip">R-01</span><span class="chip">R-02 (12)</span></td><td class="h-n"></td></tr>
-<tr><th>Imp. 3</th><td class="h-v"></td><td class="h-a"></td><td class="h-a"><span class="chip">R-04</span><span class="chip">R-05 (9)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 4</th><td class="h-a"></td><td class="h-a"><span class="chip">R-03 (8)</span></td><td class="h-r"><span class="chip">R-01</span><span class="chip">R-02</span><span class="chip">R-06</span><span class="chip">R-07</span><span class="chip">R-09 (12)</span></td><td class="h-n"></td></tr>
+<tr><th>Imp. 3</th><td class="h-v"></td><td class="h-a"></td><td class="h-a"><span class="chip">R-04</span><span class="chip">R-05</span><span class="chip">R-08</span><span class="chip">R-10</span><span class="chip">R-11 (9)</span></td><td class="h-n"></td></tr>
 <tr><th>Imp. 2</th><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td><td class="h-a"></td></tr>
 <tr><th>Imp. 1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-a"></td></tr>
 </table>
@@ -335,7 +609,7 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <span class="badge b-medio">Medio 4–6</span>
 <span class="badge b-alto">Alto 7–11</span>
 <span class="badge b-crit">Crítico 12–16</span></p>
-<p><b>Prioridad de tratamiento:</b> R-01 y R-02 (Críticos) → atención inmediata; R-03, R-04 y R-05 (Altos) → corto plazo.</p>
+<p><b>Prioridad de tratamiento:</b> R-01, R-02, R-06, R-07 y R-09 (Críticos) → atención inmediata; R-03, R-04, R-05, R-08, R-10 y R-11 (Altos) → corto plazo.</p>
 
 <!-- 13 -->
 <h2>13. Controles ISO/IEC 27001:2022 (Anexo A)</h2>
@@ -347,14 +621,24 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-03</td><td>A.8.2 — Derechos de acceso privilegiado</td><td>Revisión de reglas sudo y membresía del grupo docker (mínimo privilegio).</td></tr>
 <tr><td>R-03</td><td>A.8.9 — Gestión de la configuración</td><td>Hardening del servidor; eliminar directorios world-writable y configuraciones inseguras.</td></tr>
 <tr><td>R-05</td><td>A.8.15 / A.8.16 — Registro y seguimiento</td><td>Configurar, proteger y correlacionar logs para detectar incidentes.</td></tr>
+<tr><td>R-06 / R-07</td><td>A.8.8 — Gestión de vulnerabilidades técnicas</td><td>El runtime PHP 8.4.26 seguía en producción existiendo ya el parche 8.4.27: inventario de versiones y parcheo con plazos.</td></tr>
+<tr><td>R-06</td><td>A.8.9 — Gestión de la configuración</td><td>Desactivar <code>session.upload_progress</code> y <code>opcache</code> reduce la superficie mientras se parchea.</td></tr>
+<tr><td>R-07</td><td>A.8.24 — Uso de criptografía</td><td>Rotar las claves TLS y secretos que la fuga de memoria pudo exponer.</td></tr>
+<tr><td>R-08</td><td>A.8.16 / A.8.20 — Seguimiento y seguridad de redes</td><td>Alertas sobre PHPSESSID grandes y OOM; rechazar multipart en el borde por delante de PHP.</td></tr>
+<tr><td>R-09</td><td>A.8.8 — Gestión de vulnerabilidades técnicas</td><td>PHP 8.4.26 seguía en producción cuando ya existía la versión corregida 8.4.27: hace falta inventario de versiones y parcheo con plazos.</td></tr>
+<tr><td>R-09</td><td>A.8.9 — Gestión de la configuración</td><td>Desactivar <code>session.upload_progress</code> y fijar límites de tamaño, campos y anidación reduce la superficie mientras se parchea.</td></tr>
+<tr><td>R-10</td><td>A.8.3 — Restricción del acceso a la información</td><td>La cuenta del servidor web no debería poder recorrer el sistema ni leer datos fuera de lo que la aplicación necesita.</td></tr>
+<tr><td>R-11</td><td>A.8.16 — Actividades de seguimiento</td><td>Las señales del ataque (OOM, segfaults, ráfagas) existían en los logs; faltaban reglas que las convirtieran en alertas.</td></tr>
+<tr><td>R-11</td><td>A.8.20 — Seguridad de las redes</td><td>Filtrar el tráfico saliente del servidor web habría impedido la reverse shell al puerto 4444.</td></tr>
+<tr><td>R-11</td><td>A.5.26 — Respuesta a incidentes de seguridad de la información</td><td>Procedimiento para aislar el servidor, cortar la sesión, preservar evidencia y rotar credenciales.</td></tr>
 </table>
 
 <!-- 14 -->
 <h2>14. Contramedidas</h2>
 <table>
 <tr><th>Tipo</th><th>Contramedida</th></tr>
-<tr><td>Técnica</td><td>Consultas parametrizadas/ORM; output encoding + CSP + cookies <code>HttpOnly</code>/<code>Secure</code>; eliminar la regla sudo peligrosa y usar rutas absolutas; retirar usuarios del grupo docker; cifrar/retirar secretos en claro.</td></tr>
-<tr><td>Administrativa</td><td>Política de gestión de accesos privilegiados; estándar de desarrollo seguro; procedimiento de respuesta a incidentes; revisiones periódicas de configuración.</td></tr>
+<tr><td>Técnica</td><td>Consultas parametrizadas/ORM; output encoding + CSP + cookies <code>HttpOnly</code>/<code>Secure</code>; eliminar la regla sudo peligrosa y usar rutas absolutas; retirar usuarios del grupo docker; cifrar/retirar secretos en claro. <b>Retos 2 y 3 (PHP2Shell):</b> actualizar PHP a 8.4.27+ y reiniciar los workers; <code>session.upload_progress.enabled=0</code>, <code>opcache.enable=0</code> y, en PHP 8.5, <code>fatal_error_backtraces=0</code>; <code>post_max_size</code> bajo con límites de campos, partes multipart y anidación; rechazar multipart y filtrar el tráfico saliente en el borde; mínimo privilegio del proceso PHP; reglas de detección de PHPSESSID grande, OOM y caídas de workers.</td></tr>
+<tr><td>Administrativa</td><td>Política de gestión de accesos privilegiados; estándar de desarrollo seguro; procedimiento de respuesta a incidentes; revisiones periódicas de configuración. <b>Retos 2 y 3:</b> política de parcheo con plazos para componentes críticos; inventario de versiones del runtime y tratarlo como parte de la superficie de ataque.</td></tr>
 <tr><td>Organizacional</td><td>Concienciación del equipo de desarrollo; segregación de funciones; designación de responsables de seguridad; auditorías periódicas.</td></tr>
 </table>
 
@@ -367,6 +651,12 @@ Escala 1–4 (Bajo/Medio/Alto/Crítico). Niveles: 1–3 Bajo · 4–6 Medio · 7
 <tr><td>R-03 Privesc</td><td>Mitigar</td><td>Quitar regla sudo/tar; retirar del grupo docker; hardening</td><td>Admin de sistemas</td><td>Alta</td><td>Revisión de permisos; <code>sudo -l</code></td><td>8 → 3</td></tr>
 <tr><td>R-04 Credenciales</td><td>Mitigar</td><td>Cifrar secretos; rotación; MFA</td><td>Desarrollo / IT</td><td>Media</td><td>Revisión de BD</td><td>9 → 3</td></tr>
 <tr><td>R-05 Monitoreo</td><td>Mitigar</td><td>Centralizar logs (SIEM) + reglas de detección</td><td>Equipo Blue Team</td><td>Media</td><td>Simulación de ataque detectada</td><td>9 → 4</td></tr>
+<tr><td>R-06 RCE PHP2Shell</td><td>Mitigar</td><td>Parchear PHP a 8.4.27+; desactivar upload_progress y opcache hasta parchear</td><td>Admin de aplicaciones</td><td>Alta</td><td><code>php -v</code> ≥ 8.4.27; el exploit deja de funcionar</td><td>12 → 3</td></tr>
+<tr><td>R-07 Divulgación de memoria</td><td>Mitigar</td><td>Parchear PHP; rotar claves TLS y secretos potencialmente filtrados</td><td>Admin de sistemas / IT</td><td>Alta</td><td>Sin PHPSESSID anómalos tras el parche</td><td>12 → 3</td></tr>
+<tr><td>R-08 Config. + detección</td><td>Mitigar</td><td>Desactivar upload_progress; reglas de PHPSESSID grande, multipart y OOM</td><td>Equipo Blue Team</td><td>Media</td><td>Las reglas disparan ante un intento de explotación</td><td>9 → 4</td></tr>
+<tr><td>R-09 PHP2Shell</td><td>Mitigar</td><td>Actualizar a PHP 8.4.27+; mientras tanto desactivar upload_progress y limitar tamaño/campos de las peticiones</td><td>Admin de aplicaciones</td><td>Alta</td><td><code>php -v</code> ≥ 8.4.27; repetir la prueba del laboratorio sin OOM ni fuga</td><td>12 → 3</td></tr>
+<tr><td>R-10 Datos de la aplicación</td><td>Mitigar</td><td>Mínimo privilegio para www-data; BD fuera de la ruta web; segmentación del contenedor</td><td>Admin de sistemas</td><td>Media</td><td>Revisión de permisos de /var/www/data</td><td>9 → 4</td></tr>
+<tr><td>R-11 Detección y respuesta</td><td>Mitigar</td><td>Reglas de OOM y segfault; alertas por ráfagas y respuestas anómalas; egress filtering; procedimiento de respuesta</td><td>Equipo Blue Team</td><td>Alta</td><td>Las reglas disparan sobre los logs del Sherlock; conexión saliente a 4444 bloqueada</td><td>9 → 3</td></tr>
 </table>
 
 <!-- 16 -->
@@ -385,6 +675,10 @@ Este aporte contribuye a habilitar el techo de 5.0 una vez completados los cuatr
 <tr><td>Claude (Anthropic)</td><td>"sqlmap devuelve 403 y marca el parámetro no inyectable, ¿por qué?"</td><td>Explicación del filtro/WAF y guía de UNION manual</td><td>La inyección manual <code>?user=3-1</code> y UNION SELECT sí funcionaron</td><td>Se descartó sqlmap y se explotó manualmente con UNION de 4 columnas.</td></tr>
 <tr><td>Claude (Anthropic)</td><td>"El exploit de tar falla con 'Bad fd number' / 'Permission denied'"</td><td>Diagnóstico: <code>dash</code> no soporta <code>&gt;&amp;</code>; el .tar previo era de jake</td><td>Shell de michael recibida tras corregir</td><td>Se cambió <code>exec=sh</code> por <code>exec=bash</code> y se borró <code>backup.tar</code> antes de disparar.</td></tr>
 <tr><td>Claude (Anthropic)</td><td>"Estructura el informe y el dashboard según la rúbrica (20 apartados)"</td><td>Plantilla del informe, mapa de calor, matriz de riesgos, controles ISO</td><td>Revisado y ajustado por el equipo; datos reales del lab</td><td>Se completaron los campos del equipo y se verificó cada hallazgo antes de incluirlo.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>Reto 2: "Ayúdame a hacer el reto 2" + conexión OpenVPN y pasos de la sala PHP2Shell</td><td>Respuestas del cuestionario, pasos para conectar la VPN, confirmar el objetivo y correr el exploit</td><td>Cada paso se ejecutó en la máquina del laboratorio (Fig. R2-1 a R2-3); flag obtenida</td><td>Se corrigió un error de tipeo en una respuesta (Set-Cookie) y se registró la salida real del exploit (direcciones de heap/libphp).</td></tr>
+<tr><td>Claude (Anthropic)</td><td>Reto 3: "Este es el tercero, ¿cómo tengo que hacer en Kali Linux?" (writeup de dOOMs Day)</td><td>Traducción del writeup (Notepad++/Wireshark en Windows) a comandos grep, awk, sed y tshark, paso a paso</td><td>Cada comando se ejecutó en Kali y su salida se comparó con el writeup (Fig. R3-1 a R3-16)</td><td>Se corrigió la ruta (<code>~/Downloads</code>), un <code>cut</code> que ocultaba la cookie y la conversión de hora de tshark (UTC−4 → UTC).</td></tr>
+<tr><td>Claude (Anthropic)</td><td>Reto 3: interpretación de los resultados (boundaries, cookie, hora de la shell)</td><td>Explicación de cada fase del exploit y de la dirección de memoria filtrada</td><td>Contrastado con el aviso de php.net y con la secuencia del worker pid 145</td><td>La petición BNDRY12345 no aparece en el writeup: se documentó como observación propia sin atribuirle una función no verificada.</td></tr>
+<tr><td>Claude (Anthropic)</td><td>Reto 3: documento de seguimiento, panel del dashboard y redacción de este apartado</td><td>Tabla de evidencias, línea de tiempo, contramedidas y controles ISO propuestos</td><td>Revisado por el Líder Blue Team / Auditor ISO</td><td>Los controles ISO y la valoración de R-09 a R-11 se justificaron con la evidencia del laboratorio.</td></tr>
 </table>
 <p><b>Reflexión:</b> la IA se usó para estructurar y acelerar el trabajo, pero el equipo comprende y puede explicar cada paso.
 No se incorporaron vulnerabilidades, evidencias ni controles inventados: todo lo documentado proviene de la explotación real.
@@ -396,6 +690,7 @@ Un punto notable fue entender <b>por qué sqlmap falló</b> (filtro 403) y por q
 <li><b>Técnicas:</b> el riesgo real surge del <i>encadenamiento</i> de fallos (XSS → sesión → SQLi → SSH → sudo/tar → docker → root), no de debilidades aisladas. La escalada tuvo dos saltos (jake → michael → root).</li>
 <li><b>De gestión:</b> traducir hallazgos técnicos a riesgos organizacionales y controles ISO es lo que aporta valor al negocio.</li>
 <li><b>De herramientas:</b> una herramienta automatizada (sqlmap) puede fallar ante filtros; comprender la vulnerabilidad permite explotarla manualmente.</li>
+<li><b>Blue Team (Reto 3):</b> un ataque de 10 segundos dejó huellas en tres fuentes distintas; correlacionarlas (el mismo worker pid 145 agota memoria, filtra la cookie y luego se cae) es lo que permite reconstruir el incidente. El problema no fue la falta de registros, sino la falta de alertas sobre ellos.</li>
 <li><b>De equipo:</b> <i>(pendiente: se completará antes de la entrega final con la reflexión del equipo sobre coordinación y mejoras).</i></li>
 </ul>
 
@@ -406,6 +701,7 @@ Un punto notable fue entender <b>por qué sqlmap falló</b> (filtro 403) y por q
 credenciales y configuración del sistema. La aplicación de los controles ISO/IEC 27001:2022 seleccionados y el plan de
 tratamiento propuesto reducen los riesgos críticos a niveles medios/bajos. Se recomienda priorizar R-01 y R-02, cifrar
 credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
+<p>Los Retos 2 y 3 mostraron las dos caras de la misma vulnerabilidad del entorno de ejecución (PHP 8.4.26): en el Reto 2 se obtuvo ejecución remota sin autenticación sin tocar el código de la aplicación, y en el Reto 3 se reconstruyó ese mismo ataque desde los registros. La prioridad es tratar el runtime como parte de la superficie de ataque: parchearlo con la misma urgencia que la aplicación (R-06, R-07, R-09), restringir lo que la cuenta web puede leer (R-10), rotar los secretos que la fuga pudo exponer y convertir en alertas las señales que ya quedaban en los logs junto con el filtrado del tráfico saliente (R-08, R-11).</p>
 
 <!-- 20 -->
 <h2>20. Referencias y anexos</h2>
@@ -417,9 +713,14 @@ credenciales (R-04) e implementar monitoreo centralizado (R-05).</p>
 <li>INCIBE — https://www.incibe.es/empresas</li>
 <li>TryHackMe – The Marketplace — https://tryhackme.com/room/marketplace</li>
 <li>GTFOBins (tar, docker) — https://gtfobins.github.io/</li>
+<li>TryHackMe – PHP2Shell — https://tryhackme.com/room/cvephp2shell</li>
+<li>Hack The Box – dOOMs Day — https://roadmap.hackthebox.com/changelog/defend-against-cve-2026-109618-cve-2026-109619-with-dooms-day</li>
+<li>PHP – aviso de seguridad del 21/10/2026 — https://www.php.net/archive/2026.php#2026-10-21-5</li>
+<li>PHP – GHSA-w8hw-w9fx-j79w (CVE-2026-109618) y GHSA-6wmf-4rv5-p3rp (CVE-2026-109619) — https://github.com/php/php-src/security/advisories</li>
+<li>INCIBE-CERT – Two critical PHP vulnerabilities affect web servers — https://www.incibe.es/en/incibe-cert/publications/cybersecurity-highlights/two-critical-php-vulnerabilities-affect-web-servers</li>
+<li>OWASP Top 10:2025 – A10 Mishandling of Exceptional Conditions — https://owasp.org/Top10/2025/</li>
 </ul>
-<p><b>Anexos:</b> todas las capturas (Fig. 1–21) se encuentran en la carpeta <code>evidencias/</code>. Retos pendientes:
-PHP2Shell, dOOMs Day y Mr-Robot <span class="badge b-pend">PENDIENTE</span>.</p>
+<p><b>Anexos:</b> las capturas del Reto 1 (Fig. 1–21) están en <code>evidencias/</code>, las del Reto 2 (Fig. R2-1 a R2-4) en <code>evidencias-reto2/</code> y las del Reto 3 (Fig. R3-1 a R3-17) en <code>evidencias-reto3/</code>. Reto pendiente: Mr-Robot <span class="badge b-pend">PENDIENTE</span>.</p>
 
 <hr style="margin:40px 0 10px">
 <p style="text-align:center;font-size:11px;color:#8793a5">Informe generado para la Hackathon CyberRisk 2.0 — The Next Level · InnovaSec S.A.S. (escenario ficticio) · Documento académico</p>
