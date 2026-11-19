@@ -150,7 +150,7 @@
   <div class="tabs" id="tabs">
     <div class="tab active" data-p="r1"><span class="dot dot-ok"></span>Reto 1 · The Marketplace <span class="st st-ok">COMPLETO</span></div>
     <div class="tab" data-p="r2"><span class="dot dot-pend"></span>Reto 2 · PHP2Shell <span class="st st-pend">COMPAÑEROS</span></div>
-    <div class="tab" data-p="r3"><span class="dot dot-pend"></span>Reto 3 · dOOMs Day <span class="st st-pend">COMPAÑEROS</span></div>
+    <div class="tab" data-p="r3"><span class="dot dot-ok"></span>Reto 3 · dOOMs Day <span class="st st-ok">COMPLETO</span></div>
     <div class="tab" data-p="r4"><span class="dot dot-pend"></span>Reto 4 · Mr-Robot <span class="st st-pend">COMPAÑEROS</span></div>
     <div class="tab" data-p="glob"><span class="dot dot-pend"></span>Consolidado 4 retos</div>
   </div>
@@ -253,26 +253,175 @@
 
   <!-- ============================================================= -->
   <!-- ====  RETO 3 · dOOMs Day  — EDITA SOLO ESTE BLOQUE  ========== -->
-  <!-- ====  Responsable: [nombre del compañero]  ================== -->
+  <!-- ====  Responsable: Andrey David Morales Díaz  ============== -->
   <!-- ====  Blue Team: timeline, IoC, fuentes, contramedidas.    === -->
   <!-- ====  NO toques los paneles de otros retos.               === -->
   <!-- ============================================================= -->
   <section class="panel" id="r3">
-    <div class="pend">
-      <div class="big">🛡️</div>
-      <h3>Reto 3 — dOOMs Day (Sherlock) · Responsable: Andrey David Morales Díaz</h3>
-      <p>Enfoque: investigación defensiva Blue Team sobre registros de un servidor comprometido con PHP2Shell.</p>
-      <div class="tmpl">
-        <b>Qué rellenar:</b>
-        <ul>
-          <li>Línea de tiempo del incidente (eventos relevantes).</li>
-          <li>Indicadores de ataque (IoC) observados en los logs.</li>
-          <li>Fuentes de evidencia analizadas e interpretación.</li>
-          <li>Contramedidas de detección, contención y prevención.</li>
-        </ul>
-        Se evalúa por calidad y finalización de la investigación, no por privilegios.
+    <style>
+      #r3 .r3-tl{list-style:none;margin:6px 0 0;padding:0 0 0 18px;border-left:3px solid var(--borde)}
+      #r3 .r3-tl li{position:relative;margin:0 0 12px;padding-left:14px}
+      #r3 .r3-tl li::before{content:"";position:absolute;left:-26px;top:5px;width:13px;height:13px;border-radius:50%;
+        background:#fff;border:3px solid var(--azul2)}
+      #r3 .r3-tl li.key::before{background:var(--rojo);border-color:var(--rojo)}
+      #r3 .r3-tl .h{font-family:Consolas,monospace;font-weight:700;color:var(--azul);font-size:12.5px}
+      #r3 .r3-tl .d{font-size:12.6px;color:#333}
+      #r3 .r3-tl .s{font-size:11px;color:var(--muted)}
+      #r3 .r3-src{display:inline-block;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;
+        background:#eef6fb;color:#0a6c86;border:1px solid #cfe6f2}
+    </style>
+
+    <div class="note">Panel <b>desarrollado por el Líder Blue Team — Andrey David Morales Díaz</b> (Reto 3).
+      Investigación forense del Sherlock <b>dOOMs Day</b> (Hack The Box): servidor web de DevNotes.org comprometido con
+      <b>PHP2Shell</b> (CVE-2026-109618 + CVE-2026-109619). Se evalúa la calidad de la investigación, no la obtención de privilegios.
+      Pulsa un riesgo del mapa de calor para ver su detalle.</div>
+
+    <div class="reportbar">
+      <span class="txt"><b>Informe técnico del Reto 3:</b> comandos, capturas, línea de tiempo, IoC y contramedidas (apartados 6 y 9).</span>
+      <a class="btn-report" href="Informe-CyberRisk2.0.html#reto3" target="_blank" rel="noopener">
+        <span class="ic">📄</span><span>Abrir informe del Reto 3</span></a>
+    </div>
+
+    <h2 class="sec">Indicadores clave</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="n">12<small>/12</small></div><div class="l">Preguntas resueltas</div></div>
+      <div class="kpi"><div class="n">10<small> s</small></div><div class="l">Del 1.er POST a la shell</div></div>
+      <div class="kpi"><div class="n">149</div><div class="l">Workers ocupados</div></div>
+      <div class="kpi"><div class="n">2</div><div class="l">CVE encadenados (CVSS 9.2)</div></div>
+      <div class="kpi"><div class="n">7</div><div class="l">Indicadores de ataque</div></div>
+    </div>
+
+    <h2 class="sec">Línea de tiempo del incidente (28/10/2026, UTC)</h2>
+    <ul class="r3-tl">
+      <li><span class="h">08:42:52 → 08:43:00</span> · <span class="d"><b>149 POST a /index.php</b> desde 192.168.72.1 con boundary
+        <code>ZZZZZZZZZZ</code>: subidas que nunca terminan para ocupar los workers de Apache.</span>
+        <div class="s">access.log · error.log (mod_dumpio)</div></li>
+      <li><span class="h">08:42:58</span> · <span class="d">Primer cuerpo multipart con <code>PHP_SESSION_UPLOAD_PROGRESS</code>
+        (boundary de letras S): disparador de CVE-2026-109619.</span><div class="s">error.log</div></li>
+      <li><span class="h">08:42:59</span> · <span class="d">Aviso <i>Input variables exceeded 1000</i> y petición chunked con boundary
+        <code>BNDRY12345</code> (observación propia, función no determinada).</span><div class="s">error.log</div></li>
+      <li><span class="h">08:43:01.9</span> · <span class="d"><b>Allowed memory size of 134217728 bytes exhausted</b> en el worker pid 145
+        (CVE-2026-109618).</span><div class="s">error.log</div></li>
+      <li><span class="h">08:43:01.9</span> · <span class="d">POST de <b>774455 bytes</b> a <code>/api/health.php</code>; la respuesta trae
+        <code>Set-Cookie: PHPSESSID</code> de <b>773518 bytes</b> con direcciones de memoria (fuga del heap).</span>
+        <div class="s">access.log · error.log</div></li>
+      <li class="key"><span class="h">08:43:02</span> · <span class="d"><b>Reverse shell</b>: el servidor 192.168.72.50 abre conexión hacia
+        <b>192.168.72.1:4444</b> como <code>www-data</code> (stream 810).</span><div class="s">Capture.pcap</div></li>
+      <li><span class="h">08:43 → 08:46</span> · <span class="d">Reconocimiento: <code>cat /proc/version</code>, <code>uname -a</code>,
+        <code>ps aux</code> y búsqueda de bases de datos con <code>find / … *.sqlite …</code>.</span><div class="s">Capture.pcap</div></li>
+      <li><span class="h">08:46:16</span> · <span class="d">Caída del worker <b>pid 145</b> (Segmentation fault).</span><div class="s">error.log</div></li>
+      <li><span class="h">08:46:29</span> · <span class="d">Reconexión de la shell (stream 999) y lectura de
+        <code>/var/www/data/devnotes.sqlite</code> con <code>strings</code>.</span><div class="s">Capture.pcap</div></li>
+      <li><span class="h">08:47:42</span> · <span class="d">Segunda caída: worker <b>pid 170</b> (Segmentation fault).</span><div class="s">error.log</div></li>
+    </ul>
+
+    <h2 class="sec">Indicadores de ataque (IoC) observados</h2>
+    <div class="cards">
+      <div class="card crit"><div class="id">E-05 · H-03a</div><h4>Conexión saliente a 192.168.72.1:4444</h4>
+        <p>El servidor web inicia la conexión (SYN desde 192.168.72.50) y entrega una shell <code>www-data</code>: reverse shell.</p>
+        <div class="tags"><span class="sev crit">Crítico</span><span class="r3-src">Capture.pcap</span></div></div>
+      <div class="card crit"><div class="id">E-04 · H-03a</div><h4>Cookie PHPSESSID de 773518 bytes</h4>
+        <p>Relleno <code>W</code> y punteros (0x00007FAE26055660): fuga de memoria del heap para calcular offsets de la RCE.</p>
+        <div class="tags"><span class="sev crit">Crítico</span><span class="r3-src">access.log · error.log</span></div></div>
+      <div class="card crit"><div class="id">E-06 · H-03a</div><h4>Enumeración y lectura de la base de datos</h4>
+        <p><code>find</code> de *.sqlite/*.db y <code>strings /var/www/data/devnotes.sqlite</code> tras reconectar la shell.</p>
+        <div class="tags"><span class="sev crit">Crítico</span><span class="r3-src">Capture.pcap</span></div></div>
+      <div class="card alto"><div class="id">E-03 · H-03a</div><h4>OOM «in Unknown on line 0»</h4>
+        <p>Agotamiento de 134217728 bytes antes de ejecutar cualquier script: firma de CVE-2026-109618.</p>
+        <div class="tags"><span class="sev alto">Alto</span><span class="r3-src">error.log</span></div></div>
+      <div class="card alto"><div class="id">E-01 · H-03b</div><h4>Ráfaga de 149 POST con respuesta 0 bytes</h4>
+        <p>Una sola IP, sin tráfico previo, en 9 segundos: ocupación deliberada del pool de workers.</p>
+        <div class="tags"><span class="sev alto">Alto</span><span class="r3-src">access.log</span></div></div>
+      <div class="card medio"><div class="id">E-02 · H-03b</div><h4>Multipart con boundaries artificiales</h4>
+        <p>ZZZZZZZZZZ (149), CCCCCCCCCC (9), SSSS… (2), BBBBBBBBBB (1), BNDRY12345 (1) y campo PHP_SESSION_UPLOAD_PROGRESS.</p>
+        <div class="tags"><span class="sev medio">Medio</span><span class="r3-src">error.log</span></div></div>
+      <div class="card medio"><div class="id">E-07 · H-03c</div><h4>Segfault de workers 145 y 170</h4>
+        <p>AH00052 <i>exit signal Segmentation fault (11)</i> minutos después del tráfico anómalo: memoria corrompida.</p>
+        <div class="tags"><span class="sev medio">Medio</span><span class="r3-src">error.log</span></div></div>
+    </div>
+
+    <h2 class="sec">Fuentes de evidencia analizadas</h2>
+    <table class="mini">
+      <tr><th>Fuente</th><th>Tamaño</th><th>Herramienta</th><th>Qué aportó</th></tr>
+      <tr><td><code>access.log</code></td><td>147 KB</td><td>grep, awk, sort, uniq</td><td>Versión de PHP, IP del atacante, ráfaga de POST, POST gigante</td></tr>
+      <tr><td><code>error.log</code> (mod_dumpio)</td><td>484 MB</td><td>grep, sed, cut</td><td>Cuerpos multipart, boundaries, OOM, cookie filtrada, caídas de workers</td></tr>
+      <tr><td><code>Capture.pcap</code></td><td>257 MB</td><td>tshark, Wireshark</td><td>Reverse shell (puerto 4444), comandos del atacante, reconexión</td></tr>
+      <tr><td>Aviso de seguridad de php.net</td><td>—</td><td>Navegador</td><td>CVE, versiones afectadas (8.4.26) y corregidas (8.4.27), mitigaciones</td></tr>
+    </table>
+
+    <div class="grid2">
+      <div>
+        <h2 class="sec">Mapa de calor — riesgos del Reto 3</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Impacto (filas) × Probabilidad (columnas). Pulsa un riesgo.</p>
+        <table class="heat">
+          <tr><th></th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr>
+          <tr><th class="rh">I4</th><td class="h-a"></td><td class="h-a"></td>
+              <td class="h-r"><span class="rk" data-r3="R-06">R-06</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I3</th><td class="h-v"></td><td class="h-m"></td>
+              <td class="h-a"><span class="rk" data-r3="R-07">R-07</span><span class="rk" data-r3="R-08">R-08</span></td><td class="h-r"></td></tr>
+          <tr><th class="rh">I2</th><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td><td class="h-a"></td></tr>
+          <tr><th class="rh">I1</th><td class="h-v"></td><td class="h-v"></td><td class="h-v"></td><td class="h-m"></td></tr>
+        </table>
+        <div class="legend">
+          <span style="background:var(--verde)">Bajo 1–3</span>
+          <span style="background:var(--amarillo);color:#4a3b00">Medio 4–6</span>
+          <span style="background:var(--naranja)">Alto 7–11</span>
+          <span style="background:var(--rojo)">Crítico 12–16</span>
+        </div>
+        <div class="detail" id="r3detail"></div>
+      </div>
+      <div>
+        <h2 class="sec">Prioridad de tratamiento</h2>
+        <p style="font-size:12.3px;color:var(--muted);margin:0 0 6px">Riesgo = Impacto × Probabilidad (máx. 16).</p>
+        <div class="bar"><div class="t"><b>R-06</b><span>12 · Crítico</span></div>
+          <div class="track"><div class="fill" style="width:75%;background:#c1121f">12</div></div></div>
+        <div class="bar"><div class="t"><b>R-07</b><span>9 · Alto</span></div>
+          <div class="track"><div class="fill" style="width:56.25%;background:#b45f00">9</div></div></div>
+        <div class="bar"><div class="t"><b>R-08</b><span>9 · Alto</span></div>
+          <div class="track"><div class="fill" style="width:56.25%;background:#b45f00">9</div></div></div>
       </div>
     </div>
+
+    <h2 class="sec">Detección, contención y prevención</h2>
+    <table class="mini">
+      <tr><th>Tipo</th><th>Medida</th><th>IoC / riesgo</th></tr>
+      <tr><td>Prevención</td><td>Actualizar PHP 8.4.26 → <b>8.4.27</b> o superior; mientras tanto <code>session.upload_progress.enabled=0</code> (php.ini, reiniciando workers) y <code>post_max_size</code> bajo con límites de campos, partes multipart y anidación</td><td>E-02, E-03, E-04 · R-06</td></tr>
+      <tr><td>Prevención</td><td>Bloquear conexiones salientes del servidor web (egress) salvo las necesarias</td><td>E-05 · R-08</td></tr>
+      <tr><td>Prevención</td><td>Mínimo privilegio para <code>www-data</code>; base de datos fuera de la ruta web y con permisos restringidos</td><td>E-06 · R-07</td></tr>
+      <tr><td>Detección</td><td>Regla: «Allowed memory size of … exhausted» + «Unknown on line 0»</td><td>E-03 · R-08</td></tr>
+      <tr><td>Detección</td><td>Regla: AH00052 + Segmentation fault de workers PHP/Apache</td><td>E-07 · R-08</td></tr>
+      <tr><td>Detección</td><td>Alertas por ráfagas de POST de una IP, respuestas o cookies de tamaño anómalo y conexiones salientes a puertos no estándar</td><td>E-01, E-04, E-05 · R-08</td></tr>
+      <tr><td>Contención</td><td>Aislar el servidor, bloquear 192.168.72.1, terminar la shell, rotar credenciales y revisar devnotes.sqlite</td><td>E-05, E-06</td></tr>
+    </table>
+
+    <h2 class="sec">Riesgo residual (tras tratamiento)</h2>
+    <table class="mini">
+      <tr><th>Riesgo</th><th>Actual</th><th>Acción (resumen)</th><th>Residual</th></tr>
+      <tr><td>R-06 RCE por PHP vulnerable (PHP2Shell)</td><td>12 (Crítico)</td><td>Parche 8.4.27 + desactivar upload_progress + límites de petición</td><td>3 (Bajo)</td></tr>
+      <tr><td>R-07 Divulgación de la base de datos</td><td>9 (Alto)</td><td>Mínimo privilegio, BD fuera de la ruta web, segmentación</td><td>4 (Medio)</td></tr>
+      <tr><td>R-08 Incidente no detectado / shell saliente</td><td>9 (Alto)</td><td>Reglas de detección + filtrado egress + respuesta a incidentes</td><td>3 (Bajo)</td></tr>
+    </table>
+
+    <script>
+      (function(){
+        var r3risks = {
+          "R-06":{n:"Ejecución remota de código no autorizada", a:"Servidor de aplicaciones (PHP 8.4.26)", v:"Componente sin parchear: CVE-2026-109618 + CVE-2026-109619 (PHP2Shell)", i:4, p:3},
+          "R-07":{n:"Divulgación de información", a:"Base de datos de la aplicación (devnotes.sqlite)", v:"BD legible por www-data, sin segmentación", i:3, p:3},
+          "R-08":{n:"Incidente no detectado a tiempo", a:"Capacidad de detección y respuesta", v:"Sin alertas sobre OOM/segfault ni control de tráfico saliente", i:3, p:3}
+        };
+        function niv(v){return v>=12?["Crítico","#c1121f"]:v>=7?["Alto","#b45f00"]:v>=4?["Medio","#e6b800"]:["Bajo","#1f7a6f"]}
+        var det = document.getElementById('r3detail');
+        document.querySelectorAll('#r3 [data-r3]').forEach(function(el){
+          el.addEventListener('click', function(){
+            var k = el.getAttribute('data-r3'), r = r3risks[k]; if(!r) return;
+            var v = r.i*r.p, nl = niv(v);
+            det.classList.add('show');
+            det.innerHTML = '<b>'+k+' — '+r.n+'</b><br><b>Activo:</b> '+r.a+' · <b>Vulnerabilidad:</b> '+r.v+
+              '<br><b>Impacto:</b> '+r.i+' × <b>Probabilidad:</b> '+r.p+' = <b style="color:'+nl[1]+'">'+v+' ('+nl[0]+')</b>';
+          });
+        });
+      })();
+    </script>
   </section>
 
   <!-- ============================================================= -->
@@ -307,7 +456,7 @@
       <tr><th>Nivel</th><th>Retos requeridos</th><th>Techo</th><th>Estado</th></tr>
       <tr><td>1</td><td>Marketplace</td><td>3.0</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Completado</span></td></tr>
       <tr><td>2</td><td>+ PHP2Shell</td><td>3.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
-      <tr><td>3</td><td>+ dOOMs Day</td><td>4.0</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
+      <tr><td>3</td><td>+ dOOMs Day</td><td>4.0</td><td><span class="pill" style="background:#d6f0ea;color:#145a4f">Reto 3 completado</span> <span class="pill">Requiere Reto 2</span></td></tr>
       <tr><td>4</td><td>+ Mr-Robot</td><td>4.5</td><td><span class="pill">Pendiente (compañero)</span></td></tr>
       <tr><td>5</td><td>Los 4 + aporte extraordinario</td><td>5.0</td><td><span class="pill">Requiere 1–4 + aporte</span></td></tr>
     </table>
